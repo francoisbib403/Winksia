@@ -1,0 +1,10 @@
+{
+  // Désactive l’extension Checkpoints pour supprimer l’avertissement sur les dépôts Git imbriqués
+  "checkpoints.enabled": false,
+
+  // Optionnel: réduire l’analyse des watchers sur les éventuels dossiers Git imbriqués
+  "files.watcherExclude": {
+    "**/botlist-ai-backend/**/.git": true,
+    "**/botlist-ai-front/**/.git": true
+  }
+}
