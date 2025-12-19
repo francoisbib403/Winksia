@@ -34,6 +34,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button" // Import de Button
 import { apiClient } from "@/lib/api-client"
 import LocalModeToggle from "@/components/ui/local-mode-toggle"
+import { getFaviconUrl } from "@/lib/utils"
 
 interface Review {
   id: string
@@ -70,6 +71,7 @@ interface ToolDisplay {
   }
   featured: boolean
   userReviews?: Review[] // Add userReviews to ToolDisplay
+  website_url?: string
 }
 
 interface Category {
@@ -636,6 +638,7 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
               Évolutivité: t.value_for_money_score || 80,
             },
             featured: !!t.featured,
+            website_url: t.website_url,
           } as any; // ToolDisplay
         });
 
@@ -902,13 +905,18 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
                   {/* Header */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
-                      <h3
+                      <div className="flex items-center gap-2">
+                        {tool.website_url && (
+                          <img src={getFaviconUrl(tool.website_url, 32)} alt="favicon" className="w-5 h-5 rounded" />
+                        )}
+                        <h3
                         title={tool.name}
                         className="text-lg font-bold text-gray-900 mb-1 break-all md:break-words hyphens-auto leading-tight overflow-hidden"
                         style={{ display: "-webkit-box", WebkitLineClamp: 2 as any, WebkitBoxOrient: "vertical" as any }}
                       >
                         {tool.name}
                       </h3>
+                      </div>
                     <p className="text-sm text-gray-600 truncate">
   {tool.company} • {tool.allCategories?.join(', ') || tool.category}
 </p>
@@ -998,7 +1006,12 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-2xl">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedTool.name}</h2>
+                  <div className="flex items-center gap-2 mb-2">
+                    {selectedTool.website_url && (
+                      <img src={getFaviconUrl(selectedTool.website_url, 32)} alt="favicon" className="w-6 h-6 rounded" />
+                    )}
+                    <h2 className="text-2xl font-bold text-gray-900">{selectedTool.name}</h2>
+                  </div>
                  <p className="text-gray-600 mb-4">
   {selectedTool.company} • {
     selectedTool.allCategories && selectedTool.allCategories.length > 0 

@@ -30,6 +30,7 @@ interface ToolDisplay {
     [key: string]: number
   }
   featured: boolean
+  website_url?: string
 }
 
 // Fonction pour adapter les données de l'API
@@ -156,6 +157,7 @@ const adaptToolForDisplay = (tool: any): ToolDisplay => {
     }`,
     capabilities: calculateCapabilities(tool),
     featured: tool.featured,
+    website_url: tool.website_url,
   }
 }
 
