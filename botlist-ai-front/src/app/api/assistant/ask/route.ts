@@ -255,7 +255,6 @@ export async function POST(request: NextRequest) {
     const contextMessages: Array<{ role: 'user' | 'assistant'; content: string }> = Array.isArray(body?.context)
       ? body.context
           .filter((m: any) => typeof m?.content === 'string' && (m?.role === 'user' || m?.role === 'assistant'))
-          .slice(-8)
       : [];
 
     const messages = [

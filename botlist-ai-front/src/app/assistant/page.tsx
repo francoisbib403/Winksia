@@ -302,7 +302,8 @@ export default function AssistantPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: text,
-          context: messages.slice(-6).map((m) => ({ role: m.role, content: m.content, timestamp: m.timestamp })),
+          // Envoyer tout l'historique pour garder le contexte complet
+          context: messages.map((m) => ({ role: m.role, content: m.content, timestamp: m.timestamp })),
         }),
       })
 
