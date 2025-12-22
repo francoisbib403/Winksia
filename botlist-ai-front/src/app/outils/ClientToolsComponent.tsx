@@ -47,6 +47,7 @@ interface Review {
 
 interface ToolDisplay {
   id: string
+  slug?: string
   name: string
   company: string
   category: string
@@ -893,7 +894,7 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
               return (
                 <Link
                   key={tool.id}
-                  href={`/outils/${tool.id}`}
+                  href={`/outils/${tool.slug || tool.id}`}
                   className="block"
                   aria-label={`Voir le détail de ${tool.name}`}
                 >

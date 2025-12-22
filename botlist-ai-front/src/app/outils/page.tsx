@@ -7,6 +7,7 @@ import type { Tool } from "@/types/tool" // Import Tool from your types director
 // Interface adaptée pour le frontend
 interface ToolDisplay {
   id: string
+  slug?: string
   name: string
   company: string
   category: string
@@ -117,6 +118,7 @@ const adaptToolForDisplay = (tool: any): ToolDisplay => {
 
   return {
     id: tool.id,
+    slug: (tool as any).slug,
     name: tool.name,
     company: getCompanyName(tool), // CORRECTION : Utilise la fonction
     category: getCategoryName(tool), // CORRECTION : Utilise la fonction pour l'affichage

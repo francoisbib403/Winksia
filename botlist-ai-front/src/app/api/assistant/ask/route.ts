@@ -72,6 +72,10 @@ Pour chaque outil analysé, tu dois :
    - Analyser le rapport VALEUR/prix (et non prix seul)
 </methodologie_analyse>
 
+<regle_obligatoire_tableau>
+OBLIGATOIRE: Dès qu'au moins 2 outils sont mentionnés, comparés ou recommandés dans ta réponse, tu DOIS inclure un tableau comparatif Markdown. Ne jamais l'omettre lorsqu'il y a comparaison. Le tableau doit être placé après l'analyse et avant la recommandation finale. Les colonnes minimales: Outil, Valeur principale, Gain productivité, ROI potentiel, Facilité d'adoption, Cas d'usage idéal, (Tarification) brève.
+</regle_obligatoire_tableau>
+
 <format_reponse>
 Structure tes analyses ainsi :
 
@@ -115,7 +119,7 @@ Structure tes analyses ainsi :
 
 ---
 
-**TABLEAU COMPARATIF** (si plusieurs outils)
+**TABLEAU COMPARATIF (OBLIGATOIRE si ≥ 2 outils)**
 | Critère de Valeur | Outil A | Outil B | Outil C |
 |-------------------|---------|---------|---------|
 | Valeur principale | ...     | ...     | ...     |

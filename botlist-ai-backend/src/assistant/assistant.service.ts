@@ -602,11 +602,34 @@ export class AssistantService {
         response += `${index + 1}. **${alt.name}** - ${alt.price} (${alt.rating}/5)\n`;
       });
       response += '\n';
+
+      // Ajout OBLIGATOIRE d'un tableau comparatif quand il y a au moins 2 outils
+      const toolsForTable: RecommendedToolDto[] = [primaryTool, ...alternatives];
+      response += `**Tableau comparatif (obligatoire dès qu'il y a ≥ 2 outils)**\n`;
+      response += this.buildComparisonTable(toolsForTable);
+      response += '\n';
     }
     
     response += `**💡 Suggestion :** ${actionSuggestion}`;
     
     return response;
+  }
+
+  private buildComparisonTable(tools: RecommendedToolDto[]): string {
+    // Colonnes: Outil | Valeur principale (points forts 1) | Note | Facilité (si présente dans strengths) | (Tarification) | URL
+    // On reste conservateur avec les données disponibles
+    const headers = ['Outil', 'Valeur principale', 'Note', 'Points forts (sélection)', '(Tarification)', 'URL'];
+    const sep = headers.map(() => '---');
+    const lines: string[] = [];
+    lines.push(`| ${headers.join(' | ')} |`);
+    lines.push(`| ${sep.join(' | ')} |`);
+    for (const t of tools) {
+      const mainStrength = (t.strengths && t.strengths.length > 0) ? t.strengths[0] : '';
+      const strengthsPreview = (t.strengths || []).slice(0, 3).join(', ');
+      const url = t.url ? `[Lien](${t.url})` : '';
+      lines.push(`| ${t.name} | ${mainStrength} | ${t.rating ?? ''} | ${strengthsPreview} | ${t.price} | ${url} |`);
+    }
+    return lines.join('\n');
   }
 
   private buildErrorResponse(question: string, error: string): AssistantResponseDto {
