@@ -3,9 +3,9 @@ import { Linkedin, Twitter, Globe } from "lucide-react"
 export default function Footer() {
   const footerLinks = {
     plateforme: [
-      { name: "Découvrir les outils", href: "#" },
-      { name: "Comparateur", href: "#" },
-      { name: "Assistant IA", href: "/assistant" },
+      { name: "Outils", href: "/outils" },
+      { name: "Chat", href: "/assistant" },
+      { name: "Rankings", href: "#" },
     ],
     entreprise: [
       { name: "À propos", href: "#" },

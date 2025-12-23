@@ -20,7 +20,7 @@ export default function TestimonialsSection() {
     },
     {
       quote:
-        "L'assistant IA de Winksia comprend vraiment nos enjeux métier. Nous avons trouvé la solution parfaite pour notre service client en quelques minutes.",
+        "Le chat de Winksia comprend vraiment nos enjeux métier. Nous avons trouvé la solution parfaite pour notre service client en quelques minutes.",
       name: "Sophie Laurent",
       title: "Responsable Digital",
       company: "RetailPlus",

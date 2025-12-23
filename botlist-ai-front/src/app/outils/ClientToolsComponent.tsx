@@ -299,7 +299,7 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
   const getFunctionIcon = (functionName: string) => {
     switch (functionName) {
       case "Conversation":
-        return <MessageSquare className="w-4 h-4" style={{ color: "#2563eb" }} />
+        return <MessageSquare className="w-4 h-4" style={{ color: "hsla(221, 100%, 21%, 1.00)" }} />
       case "Traduction":
         return <Brain className="w-4 h-4" style={{ color: "#2563eb" }} />
       case "Chatbot":
@@ -699,27 +699,26 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
                 />
               </div>
             </div>
-            {/* Actions à droite (Comparer + Assistant IA) */}
-            <div className="flex items-center gap-3 justify-self-end ml-auto">
-              {/* Assistant IA -> devient Comparer(n) si >= 2 outils sélectionnés */}
-              {selectedToolsForComparison.length >= 2 ? (
-                <Link
-                  href={`/assistant?compare=1`}
-                  className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all hover:opacity-90"
-                  style={{ backgroundColor: "#f59e0b" }}
-                >
-                  Comparer ({selectedToolsForComparison.length})
-                </Link>
-              ) : (
-                <Link
-                  href="/assistant"
-                  className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all hover:opacity-90"
-                  style={{ backgroundColor: "#1e3a8a" }}
-                >
-                  <MessageSquare className="w-5 h-5" />
-                  Assistant IA
-                </Link>
-              )}
+            {/* Actions à droite (Boutons) */}
+            <div className="flex items-center gap-4 justify-self-end ml-auto">
+              <Link
+                href="/outils"
+                className="text-gray-700 hover:text-blue-900 font-medium transition-colors"
+              >
+                Outils
+              </Link>
+              <Link
+                href="/assistant"
+                className="text-gray-700 hover:text-blue-900 font-medium transition-colors"
+              >
+                Chat
+              </Link>
+              <Link
+                href="#"
+                className="text-gray-700 hover:text-blue-900 font-medium transition-colors"
+              >
+                Rankings
+              </Link>
             </div>
           </div>
         </div>
@@ -873,7 +872,7 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
             </h1>
             <p className="text-gray-600">
               <span className="font-medium">{filteredTools.length} outils trouvés</span> • Solutions IA professionnelles
-              pour dirigeants d';entreprise
+              pour dirigeants d'entreprise
             </p>
           </div>
           {/* Tools List: one tool per row */}
@@ -1093,7 +1092,7 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
               </div>
               {/* Use Cases */}
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Cas d';usage</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Cas d'usage</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {selectedTool.useCases.map((useCase, index) => (
                     <div key={index} className="flex items-center gap-3">
@@ -1271,6 +1270,39 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
       
       {/* Local Mode Toggle */}
       <LocalModeToggle />
+
+      {/* Fixed Bottom Bar for Comparison */}
+      {selectedToolsForComparison.length >= 2 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-gray-700 font-medium">
+                {selectedToolsForComparison.length} outil{selectedToolsForComparison.length > 1 ? 's' : ''} sélectionné{selectedToolsForComparison.length > 1 ? 's' : ''}
+              </span>
+              <div className="flex items-center gap-2">
+                {selectedToolsForComparison.map((tool) => (
+                  <div key={tool.id} className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full">
+                    <span className="text-sm text-gray-700 truncate max-w-[150px]">{tool.name}</span>
+                    <button
+                      onClick={() => handleRemoveToolFromComparison(tool.id)}
+                      className="text-gray-500 hover:text-red-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <Link
+              href={`/outils/comparer`}
+              className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all hover:opacity-90"
+              style={{ backgroundColor: "#f59e0b" }}
+            >
+              Comparer ({selectedToolsForComparison.length})
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

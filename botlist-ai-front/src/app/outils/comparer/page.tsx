@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { MessageSquare, Search, ArrowLeft } from "lucide-react"
+import { MessageSquare, Search, ArrowLeft, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { renderStars, renderCapabilityBar } from "@/utils/renderers"
 import { apiClient } from "@/lib/api-client"
@@ -227,7 +227,7 @@ export default function ComparePage() {
             {/* Logo */}
             <div className="flex items-center gap-4 justify-self-start">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1e3a8a" }}>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#051e63ff" }}>
                   <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
@@ -250,16 +250,30 @@ export default function ComparePage() {
                 />
               </div>
             </div>
-            {/* Bouton Assistant IA à droite */}
+            {/* Actions à droite (Boutons + Profile) */}
             <div className="flex items-center gap-3 justify-self-end ml-auto">
               <Link
-                href="/assistant?compare=1"
-                className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all hover:opacity-90"
-                style={{ backgroundColor: "#1e3a8a" }}
+                href="/outils"
+                className="text-gray-700 hover:text-blue-900 font-medium transition-colors"
               >
-                <MessageSquare className="w-5 h-5" />
-                Assistant IA
+                Outils
               </Link>
+              <Link
+                href="/assistant"
+                className="text-gray-700 hover:text-blue-900 font-medium transition-colors"
+              >
+                Chat
+              </Link>
+              <Link
+                href="#"
+                className="text-gray-700 hover:text-blue-900 font-medium transition-colors"
+              >
+                Rankings
+              </Link>
+              {/* User Profile - Round Avatar */}
+              <button className="w-10 h-10 rounded-full text-white flex items-center justify-center hover:opacity-90 transition-colors" style={{ backgroundColor: "#1e3a8a" }}>
+                <User className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>

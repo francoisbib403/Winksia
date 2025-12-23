@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, ArrowLeft, Bookmark, ExternalLink, FileText, Star, MessageSquare, Search, Heart } from "lucide-react"
+import { Eye, ArrowLeft, Bookmark, ExternalLink, FileText, Star, MessageSquare, Search, Heart, User, Bold, Italic, List, ChevronDown, ChevronUp } from "lucide-react"
 import { renderStars, renderCapabilityBar } from "@/utils/renderers"
 import { Button } from "@/components/ui/button"
 import { apiClient } from "@/lib/api-client"
 import AllReviewsModal from "@/components/ui/all-reviews-modal"
 import WriteReviewModal from "@/components/ui/write-review-modal"
 import AiAssistantModal from "@/components/ui/ai-assistant-modal"
+import { TransitionPanel } from "@/components/ui/transition-panel"
 import { getFaviconUrl } from "@/lib/utils"
 
 export type Review = {
@@ -84,6 +85,65 @@ export default function ToolDetailClient({ initialTool }: { initialTool: ToolDis
   const [upvoteCount, setUpvoteCount] = useState<number>(0)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [activeMediaIndex, setActiveMediaIndex] = useState(0)
+  const [activeTab, setActiveTab] = useState(0)
+  const [isReviewFormExpanded, setIsReviewFormExpanded] = useState(false)
+  const [reviewText, setReviewText] = useState("")
+  const [reviewRating, setReviewRating] = useState(5)
+
+  const tabs = [
+    {
+      title: "Description",
+      content: (
+        <div className="space-y-8">
+          <div className="bg-white rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">Description</h3>
+            <p className="text-gray-700 leading-relaxed">{tool.fullDescription}</p>
+          </div>
+          <div className="bg-white rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-6">Évaluation des Capacités</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Object.entries(tool.capabilities).map(([label, value]) => (
+                <div key={label}>{renderCapabilityBar(label, value)}</div>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white rounded-2xl p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Fonctions</h3>
+              <div className="flex flex-wrap gap-2">
+                {tool.functions.map((func, i) => (
+                  <span key={`${func}-${i}`} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                    {func}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Domaines d'application</h3>
+              <div className="flex flex-wrap gap-2">
+                {tool.domains.map((domain, index) => (
+                  <span key={index} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                    {domain}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Cas d'usage</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {tool.useCases.map((useCase, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
+                  <span className="text-gray-700">{useCase}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+  ]
 
   // Init interactions from localStorage
   useEffect(() => {
@@ -186,7 +246,7 @@ export default function ToolDetailClient({ initialTool }: { initialTool: ToolDis
     <div className="min-h-screen bg-gray-50">
       {/* Header identique à la page outils */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="w-full px-16 py-4">
           <div className="grid grid-cols-3 items-center gap-6">
             {/* Logo */}
             <div className="flex items-center gap-4 justify-self-start">
@@ -214,32 +274,46 @@ export default function ToolDetailClient({ initialTool }: { initialTool: ToolDis
                 />
               </div>
             </div>
-            {/* Actions à droite */}
+            {/* Actions à droite (Boutons + Profile) */}
             <div className="flex items-center gap-3 justify-self-end ml-auto">
-              {selectedToolsForComparison.length >= 1 && (
-                <button
-                  onClick={() => {}}
+              <Link
+                href="/outils"
+                className="text-gray-700 hover:text-blue-900 font-medium transition-colors"
+              >
+                Outils
+              </Link>
+              <Link
+                href="/assistant"
+                className="text-gray-700 hover:text-blue-900 font-medium transition-colors"
+              >
+                Chat
+              </Link>
+              <Link
+                href="#"
+                className="text-gray-700 hover:text-blue-900 font-medium transition-colors"
+              >
+                Rankings
+              </Link>
+              {selectedToolsForComparison.length >= 2 ? (
+                <Link
+                  href={`/outils/comparer`}
                   className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all hover:opacity-90"
                   style={{ backgroundColor: "#f59e0b" }}
                 >
                   Comparer ({selectedToolsForComparison.length})
-                </button>
-              )}
-              <Link
-                href="/assistant"
-                className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all hover:opacity-90"
-                style={{ backgroundColor: "#1e3a8a" }}
-              >
-                <MessageSquare className="w-5 h-5" />
-                Assistant IA
-              </Link>
+                </Link>
+              ) : null}
+              {/* User Profile - Round Avatar */}
+              <button className="w-10 h-10 rounded-full text-white flex items-center justify-center hover:opacity-90 transition-colors" style={{ backgroundColor: "#1e3a8a" }}>
+                <User className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
       </header>
 
       {/* Hero */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-gray-200 sticky top-[72px] z-40">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-start gap-4">
             <Link href="/outils" className="p-2 hover:bg-gray-100 rounded-lg transition-colors mt-1">
@@ -300,10 +374,10 @@ export default function ToolDetailClient({ initialTool }: { initialTool: ToolDis
 
       {/* Contenu principal */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-2 space-y-8">
             {(tool.screenshots && tool.screenshots.length > 0) || tool.demoUrl ? (
-              <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-100">
+              <div className="bg-white rounded-2xl p-4">
                 <div className="flex gap-4">
                   <div className="hidden md:flex md:flex-col gap-2 w-24">
                     {[...(tool.screenshots || []), ...(tool.demoUrl ? [tool.demoUrl] : [])].map((src, idx) => (
@@ -323,7 +397,7 @@ export default function ToolDetailClient({ initialTool }: { initialTool: ToolDis
               </div>
             ) : null}
 
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="bg-white rounded-2xl p-6">
               <div className="flex items-center justify-between gap-6">
                 <div className="flex-1">
                   <div className="mb-2">{renderStars(tool.rating)}</div>
@@ -336,98 +410,179 @@ export default function ToolDetailClient({ initialTool }: { initialTool: ToolDis
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-3">Description</h3>
-              <p className="text-gray-700 leading-relaxed">{tool.fullDescription}</p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-6">Évaluation des Capacités</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(tool.capabilities).map(([label, value]) => (
-                  <div key={label}>{renderCapabilityBar(label, value)}</div>
+            {/* Tabs */}
+            <div className="bg-white rounded-2xl overflow-hidden">
+              <div className="flex space-x-2 px-6 pt-6 pb-2 border-b border-gray-100">
+                {tabs.map((tab, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setActiveTab(index)}
+                    className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                      activeTab === index
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {tab.title}
+                  </button>
                 ))}
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Fonctions</h3>
-                <div className="flex flex-wrap gap-2">
-                  {tool.functions.map((func, i) => (
-                    <span key={`${func}-${i}`} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                      {func}
-                    </span>
+              <div className="p-6">
+                <TransitionPanel
+                  activeIndex={activeTab}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                  variants={{
+                    enter: { opacity: 0, y: -20, filter: "blur(4px)" },
+                    center: { opacity: 1, y: 0, filter: "blur(0px)" },
+                    exit: { opacity: 0, y: 20, filter: "blur(4px)" },
+                  }}
+                >
+                  {tabs.map((tab, index) => (
+                    <div key={index}>{tab.content}</div>
                   ))}
-                </div>
-              </div>
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Domaines d'application</h3>
-                <div className="flex flex-wrap gap-2">
-                  {tool.domains.map((domain, index) => (
-                    <span key={index} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                      {domain}
-                    </span>
-                  ))}
-                </div>
+                </TransitionPanel>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Cas d'usage</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {tool.useCases.map((useCase, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
-                    <span className="text-gray-700">{useCase}</span>
+            {/* Reviews Section - Outside tabs, no background */}
+            <div className="space-y-6">
+              {/* Expandable Review Form */}
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setIsReviewFormExpanded(!isReviewFormExpanded)}
+                  className="w-full px-6 py-4 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Star className="w-5 h-5 text-blue-600" />
+                    <span className="font-medium text-gray-900">Écrire un avis</span>
                   </div>
-                ))}
-              </div>
-            </div>
+                  {isReviewFormExpanded ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+                </button>
 
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-gray-900">Avis Utilisateurs ({tool.reviews})</h3>
-                <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50 bg-transparent" onClick={() => setIsWriteReviewModalOpen(true)}>
-                  <Star className="w-4 h-4 mr-2" />
-                  Écrire un avis
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="bg-gray-50 rounded-xl p-6 flex flex-col items-center justify-center">
-                  <div className="text-5xl font-bold text-gray-900 mb-2">{tool.rating.toFixed(1)}/5</div>
-                  <p className="text-gray-600 mb-4">à partir de {tool.reviews} avis</p>
-                  {renderStars(tool.rating)}
-                </div>
-                <div className="bg-gray-50 rounded-xl p-6 space-y-3">
-                  {[5, 4, 3, 2, 1].map((starCount) => {
-                    const count = allReviews.filter((r) => r.rating === starCount).length
-                    const percentage = tool.reviews > 0 ? (count / tool.reviews) * 100 : 0
-                    return (
-                      <div key={starCount} className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-gray-700">{starCount} étoiles</span>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${percentage}%` }} />
-                        </div>
-                        <span className="text-sm text-gray-600">({count})</span>
+                {isReviewFormExpanded && (
+                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                    {/* Star Rating */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Votre note</label>
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            onClick={() => setReviewRating(star)}
+                            className="transition-transform hover:scale-110"
+                          >
+                            <Star
+                              className={`w-6 h-6 ${star <= reviewRating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                            />
+                          </button>
+                        ))}
+                        <span className="ml-2 text-sm text-gray-600">{reviewRating}/5</span>
                       </div>
-                    )
-                  })}
-                </div>
+                    </div>
+
+                    {/* Formatting Toolbar */}
+                    <div className="mb-2">
+                      <div className="flex items-center gap-1 p-2 bg-white border border-gray-200 rounded-t-lg">
+                        <button
+                          type="button"
+                          onClick={() => setReviewText(prev => prev + "**texte en gras**")}
+                          className="p-2 hover:bg-gray-100 rounded transition-colors"
+                          title="Gras"
+                        >
+                          <Bold className="w-4 h-4 text-gray-700" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setReviewText(prev => prev + "*texte en italique*")}
+                          className="p-2 hover:bg-gray-100 rounded transition-colors"
+                          title="Italique"
+                        >
+                          <Italic className="w-4 h-4 text-gray-700" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setReviewText(prev => prev + "\n- Élément de liste")}
+                          className="p-2 hover:bg-gray-100 rounded transition-colors"
+                          title="Liste"
+                        >
+                          <List className="w-4 h-4 text-gray-700" />
+                        </button>
+                      </div>
+                      <textarea
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        placeholder="Partagez votre expérience avec cet outil..."
+                        className="w-full px-4 py-3 border border-t-0 border-gray-200 rounded-b-lg min-h-[150px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      />
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="flex justify-end gap-3 mt-4">
+                      <button
+                        onClick={() => {
+                          setIsReviewFormExpanded(false)
+                          setReviewText("")
+                          setReviewRating(5)
+                        }}
+                        className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (reviewText.trim()) {
+                            handleAddReview(reviewRating, reviewText)
+                            setIsReviewFormExpanded(false)
+                            setReviewText("")
+                            setReviewRating(5)
+                          }
+                        }}
+                        disabled={!reviewText.trim()}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Publier l'avis
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-6">
-                {(tool.userReviews || []).slice(0, 4).map((review) => (
-                  <div key={review.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                {[
+                  {
+                    user: "Marie Dupont",
+                    avatar: "MD",
+                    rating: 5,
+                    comment: "Excellent outil ! J'ai pu augmenter ma productivité de 40% depuis que je l'utilise. L'interface est intuitive et les fonctionnalités sont très complètes.",
+                    date: "2024-12-15"
+                  },
+                  {
+                    user: "Jean Martin",
+                    avatar: "JM",
+                    rating: 5,
+                    comment: "Une révélation pour notre équipe. L'intégration avec nos outils existants s'est faite sans aucun problème. Je recommande vivement !",
+                    date: "2024-12-10"
+                  },
+                  {
+                    user: "Sophie Bernard",
+                    avatar: "SB",
+                    rating: 4,
+                    comment: "Très bon produit dans l'ensemble. Quelques petites améliorations possibles au niveau de l'interface mobile, mais rien de bloquant.",
+                    date: "2024-12-05"
+                  },
+                  {
+                    user: "Pierre Leroy",
+                    avatar: "PL",
+                    rating: 5,
+                    comment: "Le support client est exceptionnel. J'avais un problème technique qui a été résolu en moins de 2 heures. Bravo à l'équipe !",
+                    date: "2024-11-28"
+                  }
+                ].map((review, index) => (
+                  <div key={index} className="bg-white rounded-xl p-6">
                     <div className="flex items-center gap-4 mb-3">
-                      {review.avatar.startsWith("http") ? (
-                        <img src={review.avatar} alt={review.user} className="w-10 h-10 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center text-lg font-bold">
-                          {review.avatar}
-                        </div>
-                      )}
+                      <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center text-lg font-bold">
+                        {review.avatar}
+                      </div>
                       <div>
                         <h5 className="font-semibold text-gray-900">{review.user}</h5>
                         <div className="flex items-center gap-1">
@@ -440,21 +595,13 @@ export default function ToolDetailClient({ initialTool }: { initialTool: ToolDis
                     <p className="text-xs text-gray-500 text-right">{review.date}</p>
                   </div>
                 ))}
-
-                {(tool.userReviews || []).length > 4 && (
-                  <div className="text-center mt-4">
-                    <Button variant="outline" onClick={() => setIsAllReviewsModalOpen(true)}>
-                      Voir tous les {tool.reviews} avis
-                    </Button>
-                  </div>
-                )}
               </div>
             </div>
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+          <div className="lg:col-span-1 space-y-6 sticky top-[220px] h-fit z-30">
+            <div className="bg-white rounded-2xl p-6">
               <Button onClick={handleVisitWebsite} className="w-full flex items-center justify-center gap-2">
                 <ExternalLink className="w-4 h-4" /> Visiter le site
               </Button>
@@ -463,14 +610,14 @@ export default function ToolDetailClient({ initialTool }: { initialTool: ToolDis
                   <FileText className="w-4 h-4" /> Voir la démo
                 </a>
               )}
-              <div className="mt-4 p-3 rounded-lg bg-gray-50 border border-gray-100">
+              <div className="mt-4 p-3 rounded-lg bg-gray-50">
                 <div className="text-sm text-gray-600">Tarification</div>
                 <div className="text-lg font-semibold text-gray-900">{tool.price}</div>
                 <div className="text-sm text-gray-500">{tool.priceType}</div>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="bg-white rounded-2xl p-6">
               <h4 className="text-sm font-semibold text-gray-900 mb-3">Informations</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
@@ -489,7 +636,7 @@ export default function ToolDetailClient({ initialTool }: { initialTool: ToolDis
             </div>
 
             {tool.integrations && tool.integrations.length > 0 && (
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+              <div className="bg-white rounded-2xl p-6">
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Intégrations</h4>
                 <div className="flex flex-wrap gap-2">
                   {tool.integrations.slice(0, 12).map((name, idx) => (
@@ -500,7 +647,7 @@ export default function ToolDetailClient({ initialTool }: { initialTool: ToolDis
             )}
 
             {tool.platforms && tool.platforms.length > 0 && (
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+              <div className="bg-white rounded-2xl p-6">
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Plateformes</h4>
                 <div className="flex flex-wrap gap-2">
                   {tool.platforms.map((p, idx) => (
@@ -510,16 +657,6 @@ export default function ToolDetailClient({ initialTool }: { initialTool: ToolDis
               </div>
             )}
 
-            {(tool.allCategories && tool.allCategories.length > 0) && (
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">Catégories</h4>
-                <div className="flex flex-wrap gap-2">
-                  {tool.allCategories.map((c, idx) => (
-                    <span key={idx} className="px-2 py-1 rounded-md bg-gray-100 text-gray-800 text-xs">{c}</span>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 

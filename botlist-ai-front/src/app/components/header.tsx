@@ -148,18 +148,15 @@ export default function Header() {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
-              Accueil
-            </a>
-            <a href="#" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
-              À propos
-            </a>
-            <a href="#" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
-              Témoignage
-            </a>
-            <a href="#" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
-              Contact
-            </a>
+            <Link href="/outils" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
+              Outils
+            </Link>
+            <Link href="/assistant" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
+              Chat
+            </Link>
+            <Link href="#" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
+              Rankings
+            </Link>
 
             {/* SECTION UTILISATEUR CORRIGÉE */}
             {isAuthenticated && currentUser ? (

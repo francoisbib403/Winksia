@@ -394,7 +394,7 @@ const CreateToolModal: React.FC<{
                 value={formData.tagline}
                 onChange={(e) => onFormChange('tagline', e.target.value)}
                 className={inputClasses}
-                placeholder="Assistant IA conversationnel avancé"
+                placeholder="Chat conversationnel avancé"
                 disabled={isSubmitting}
               />
             </div>

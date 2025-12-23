@@ -8,7 +8,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { AlertTriangle, ArrowLeft, ArrowUp, Copy, MessageSquare, ThumbsDown, ThumbsUp } from "lucide-react"
+import { AlertTriangle, ArrowLeft, ArrowUp, Copy, MessageSquare, ThumbsDown, ThumbsUp, User } from "lucide-react"
 
 type Role = "user" | "assistant"
 
@@ -392,15 +392,30 @@ export default function AssistantPage() {
                 </div>
               </div>
             </div>
-            {/* Actions à droite */}
+            {/* Actions à droite (Boutons + Profile) */}
             <div className="flex items-center gap-3 justify-self-end ml-auto">
               <Link
                 href="/outils"
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 text-gray-600"
-                aria-label="Retour aux outils"
+                className="text-gray-700 hover:text-blue-900 font-medium transition-colors"
               >
-                <ArrowLeft className="w-5 h-5" />
+                Outils
               </Link>
+              <Link
+                href="/assistant"
+                className="text-gray-700 hover:text-blue-900 font-medium transition-colors"
+              >
+                Chat
+              </Link>
+              <Link
+                href="#"
+                className="text-gray-700 hover:text-blue-900 font-medium transition-colors"
+              >
+                Rankings
+              </Link>
+              {/* User Profile - Round Avatar */}
+              <button className="w-10 h-10 rounded-full text-white flex items-center justify-center hover:opacity-90 transition-colors" style={{ backgroundColor: "#1e3a8a" }}>
+                <User className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>

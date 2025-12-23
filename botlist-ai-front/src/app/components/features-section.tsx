@@ -18,8 +18,8 @@ export default function FeaturesSection() {
     },
     {
       icon: MessageCircle,
-      title: "Assistant IA Intégré",
-      description: "Notre assistant IA vous guide dans le choix des meilleures solutions pour vos besoins spécifiques.",
+      title: "Chat Intégré",
+      description: "Notre chat vous guide dans le choix des meilleures solutions pour vos besoins spécifiques.",
       iconColor: "#7c3aed",
       bgColor: "#e9d5ff",
     },
