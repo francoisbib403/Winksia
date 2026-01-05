@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Eye } from "lucide-react";
+import { Eye, LogOut } from "lucide-react";
 import Link from "next/link"
 import React, { useState, useEffect } from 'react';
 import RegisterModal from './RegisterModal';
@@ -136,18 +136,17 @@ export default function Header() {
 
   return (
     <>
-      <header className="w-full px-6 py-4 bg-white/95 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="w-full px-16 py-4 bg-white/95 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100">
+        <div className="grid grid-cols-3 items-center gap-6">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-900 rounded-lg flex items-center justify-center">
-              <Eye className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">WINKSIA</span>
-          </Link>
+          <div className="flex items-center gap-4 justify-self-start">
+            <Link href="/" className="flex items-center">
+              <span className="text-xl font-bold text-gray-900">WINKSIA</span>
+            </Link>
+          </div>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-8 justify-self-center">
             <a href="#" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
               Accueil
             </a>
@@ -160,7 +159,10 @@ export default function Header() {
             <a href="#" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
               Contact
             </a>
+          </nav>
 
+          {/* Buttons */}
+          <div className="flex items-center gap-3 justify-self-end">
             {/* SECTION UTILISATEUR CORRIGÉE */}
             {isAuthenticated && currentUser ? (
               <div className="flex items-center gap-4">
@@ -174,17 +176,17 @@ export default function Header() {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Avatar utilisateur (optionnel) */}
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
-                    {currentUser.firstname 
-                      ? currentUser.firstname[0].toUpperCase() 
+                    {currentUser.firstname
+                      ? currentUser.firstname[0].toUpperCase()
                       : currentUser.email[0].toUpperCase()
                     }
                   </span>
                 </div>
-                
+
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all hover:scale-105"
@@ -209,14 +211,14 @@ export default function Header() {
                 </button>
               </div>
             )}
-          </nav>
 
-          {/* Mobile menu button */}
-          <button className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+            {/* Mobile menu button */}
+            <button className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
 

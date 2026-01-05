@@ -226,16 +226,9 @@ export default function ComparePage() {
           <div className="grid grid-cols-3 items-center gap-6">
             {/* Logo */}
             <div className="flex items-center gap-4 justify-self-start">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1e3a8a" }}>
-                  <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                  </div>
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">Winksia</h1>
-                </div>
-              </div>
+              <Link href="/" className="flex items-center">
+                <span className="text-xl font-bold text-gray-900">WINKSIA</span>
+              </Link>
             </div>
             {/* Search Bar centré */}
             <div className="justify-self-center w-full max-w-2xl">
@@ -250,16 +243,15 @@ export default function ComparePage() {
                 />
               </div>
             </div>
-            {/* Bouton Assistant IA à droite */}
-            <div className="flex items-center gap-3 justify-self-end ml-auto">
-              <Link
-                href="/assistant?compare=1"
-                className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all hover:opacity-90"
-                style={{ backgroundColor: "#1e3a8a" }}
-              >
-                <MessageSquare className="w-5 h-5" />
-                Assistant IA
+            {/* Boutons de navigation à droite */}
+            <div className="flex items-center gap-6 justify-self-end ml-auto">
+              <Link href="/outils" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
+                Outils
               </Link>
+              <Link href="/assistant" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
+                Chat
+              </Link>
+              <span className="text-gray-400 font-medium">Classement</span>
             </div>
           </div>
         </div>

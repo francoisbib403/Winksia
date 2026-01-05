@@ -33,7 +33,7 @@ import WriteReviewModal from "@/components/ui/write-review-modal" // Nouveau che
 import Link from "next/link"
 import { Button } from "@/components/ui/button" // Import de Button
 import { apiClient } from "@/lib/api-client"
-import LocalModeToggle from "@/components/ui/local-mode-toggle"
+
 import { getFaviconUrl } from "@/lib/utils"
 
 interface Review {
@@ -53,6 +53,7 @@ interface ToolDisplay {
    allCategories: string[] // AJOUT : Pour le filtrage
   description: string
   fullDescription: string
+  tagline?: string // Tagline de l'outil
   rating: number
   reviews: number
   price: string
@@ -85,10 +86,10 @@ interface ClientToolsComponentProps {
 }
 
 const priceRanges = [
-  { label: "Gratuit", value: "Gratuit", popular: true },
-  { label: "Freemium", value: "Freemium", popular: true },
-  { label: "Payant", value: "Payant", popular: true },
-  { label: "Open Source", value: "Open Source" },
+  { label: "Gratuit", value: "Gratuit", dbValue: "included", popular: true },
+  { label: "Freemium", value: "Freemium", dbValue: "freemium", popular: true },
+  { label: "Payant", value: "Payant", dbValue: "paid", popular: true },
+  { label: "Open Source", value: "Open Source", dbValue: "open_source" },
 ]
 // Les options de secteurs sont dérivées des catégories réelles reçues via props
 const useCaseOptions = [
@@ -129,6 +130,12 @@ const parseApiDate = (dateString: string): string => {
 
 const matchesPriceRange = (tool: ToolDisplay, selectedRangeValue: string) => {
   return tool.priceType === selectedRangeValue
+}
+
+// Fonction pour convertir la valeur UI vers la valeur DB
+const getDbValueFromUiValue = (uiValue: string) => {
+  const range = priceRanges.find(r => r.value === uiValue)
+  return range?.dbValue || uiValue
 }
 
 export default function ClientToolsComponent({ initialTools, categories }: ClientToolsComponentProps) {
@@ -569,8 +576,9 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
       params.set('use_cases', selectedUseCase);
     }
     if (selectedPricing) {
-      // Remplace 'pricing_model' par 'pricing' (labels côté UI)
-      params.set('pricing', selectedPricing);
+      // Convertir la valeur UI vers la valeur DB
+      const dbValue = getDbValueFromUiValue(selectedPricing)
+      params.set('pricing_model', dbValue);
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -617,6 +625,7 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
             allCategories: categoryNames,
             description: t.description,
             fullDescription: t.long_description || t.description,
+            tagline: t.tagline || '', // Tagline de l'outil
             rating: typeof t.overall_rating === 'number' ? t.overall_rating : 0,
             reviews: typeof t.review_count === 'number' ? t.review_count : 0,
             price,
@@ -666,19 +675,9 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
           <div className="grid grid-cols-3 items-center gap-6">
             {/* Logo */}
             <div className="flex items-center gap-4 justify-self-start">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: "#1e3a8a" }}
-                >
-                  <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                  </div>
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">Winksia</h1>
-                </div>
-              </div>
+              <Link href="/" className="flex items-center">
+                <span className="text-xl font-bold text-gray-900">WINKSIA</span>
+              </Link>
             </div>
             {/* Search Bar - centré */}
             <div className="justify-self-center w-full max-w-2xl">
@@ -700,25 +699,25 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
             </div>
             {/* Actions à droite (Comparer + Assistant IA) */}
             <div className="flex items-center gap-3 justify-self-end ml-auto">
-              {/* Assistant IA -> devient Comparer(n) si >= 2 outils sélectionnés */}
-              {selectedToolsForComparison.length >= 2 ? (
-                <Link
-                  href={`/assistant?compare=1`}
-                  className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all hover:opacity-90"
-                  style={{ backgroundColor: "#f59e0b" }}
-                >
-                  Comparer ({selectedToolsForComparison.length})
+              {/* Boutons texte de navigation */}
+              <div className="flex items-center gap-6">
+                <Link href="/outils" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
+                  Outils
                 </Link>
-              ) : (
-                <Link
-                  href="/assistant"
-                  className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all hover:opacity-90"
-                  style={{ backgroundColor: "#1e3a8a" }}
-                >
-                  <MessageSquare className="w-5 h-5" />
-                  Assistant IA
+                <Link href="/assistant" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
+                  Chat
                 </Link>
-              )}
+                <span className="text-gray-400 font-medium">Classement</span>
+                {selectedToolsForComparison.length >= 2 && (
+                  <Link
+                    href={`/assistant?compare=1`}
+                    className="px-4 py-2 rounded-lg font-medium text-white flex items-center gap-2 transition-all hover:opacity-90"
+                    style={{ backgroundColor: "#f59e0b" }}
+                  >
+                    Comparer ({selectedToolsForComparison.length})
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -917,9 +916,9 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
                         {tool.name}
                       </h3>
                       </div>
-                    <p className="text-sm text-gray-600 truncate">
-  {tool.company} • {tool.allCategories?.join(', ') || tool.category}
-</p>
+                    <p className="text-sm text-gray-600 truncate flex items-center gap-1">
+                      {tool.category} • {renderStars(tool.rating)}
+                    </p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
                       <button
@@ -952,30 +951,38 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
                       >
                         {tool.description}
                       </p>
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-2">
-                        {tool.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              tag.includes("+") ? "bg-gray-100 text-gray-600" : "bg-blue-100 text-blue-700"
-                            }`}
-                          >
-                            {tag}
-                          </span>
-                        ))}
+                      {/* Tagline et Features */}
+                      <div className="space-y-2">
+                        {/* Tagline en vert */}
+                        {tool.tagline && (
+                          <div>
+                            <span
+                              className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700"
+                            >
+                              {tool.tagline}
+                            </span>
+                          </div>
+                        )}
+                        {/* Features en bleu */}
+                        <div className="flex flex-wrap gap-2">
+                          {tool.functions.slice(0, 3).map((feature, index) => (
+                            <span
+                              key={index}
+                              className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
+                            >
+                              {feature}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                    {/* Colonne droite: note + prix */}
-                    <div className="w-full lg:w-48 flex-shrink-0 flex flex-col justify-start lg:justify-between">
-                      {/* Rating */}
-                      <div className="mb-3 lg:mb-2">{renderStars(tool.rating)}</div>
+                    {/* Colonne droite: prix en bas */}
+                    <div className="w-full lg:w-48 flex-shrink-0 flex flex-col justify-start lg:justify-end">
                       {/* Price */}
                       <div className="mb-3 lg:mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-green-600 font-bold text-lg">{tool.price.split("-")[0]}</span>
-                          <span className="text-gray-600 text-sm">{tool.priceType}</span>
-                        </div>
+                        <span className="font-bold text-lg" style={{ color: '#f59e0b' }}>
+                          {tool.priceType}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -1064,7 +1071,17 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
               {/* Functions and Domains */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Fonctions</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Tagline</h3>
+                  {selectedTool.tagline && (
+                    <div className="mb-4">
+                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                        {selectedTool.tagline}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Features</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedTool.functions.map((func, i) => (
                       <span
@@ -1072,19 +1089,6 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
                         className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
                       >
                         {func}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Domaines d'application</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTool.domains.map((domain, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium"
-                      >
-                        {domain}
                       </span>
                     ))}
                   </div>
@@ -1267,9 +1271,7 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
           onAddReview={handleAddReview}
         />
       )}
-      
-      {/* Local Mode Toggle */}
-      <LocalModeToggle />
+
     </div>
   )
 }

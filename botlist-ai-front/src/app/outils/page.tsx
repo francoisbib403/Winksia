@@ -13,6 +13,7 @@ interface ToolDisplay {
   allCategories: string[] // AJOUT : Pour le filtrage
   description: string
   fullDescription: string
+  tagline?: string // Tagline de l'outil
   rating: number
   reviews: number
   price: string
@@ -132,6 +133,7 @@ const adaptToolForDisplay = (tool: any): ToolDisplay => {
     })(),
     description: tool.description,
     fullDescription: tool.long_description || tool.description,
+    tagline: tool.tagline || '', // Tagline de l'outil
     rating: tool.overall_rating,
     reviews: tool.review_count,
     price: getPriceDisplay(tool.pricing_model, tool.pricing_details),

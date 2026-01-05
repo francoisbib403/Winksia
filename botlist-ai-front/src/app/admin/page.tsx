@@ -2666,11 +2666,8 @@ Cette action est irréversible.`)) {
         <div className="w-64 bg-white/80 backdrop-blur-xl border-r border-white/20 shadow-xl">
           <div className="p-6">
             <div className="flex items-center space-x-3 mb-8">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Winksia</h1>
+                <h1 className="text-xl font-bold text-gray-900">WINKSIA</h1>
                 <p className="text-sm text-gray-500">Admin Dashboard</p>
               </div>
             </div>
