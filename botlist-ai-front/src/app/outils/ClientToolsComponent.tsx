@@ -604,6 +604,7 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
           return {
             id: t.id,
             name: t.name,
+            slug: t.slug,
             company: categoryNames[0] || "Non spécifié",
             category: categoryNames[0] || "Général",
             allCategories: categoryNames,

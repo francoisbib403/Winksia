@@ -49,6 +49,23 @@ export const getToolById = async (id: string): Promise<ToolSummary> => {
   return response.data;
 };
 
+export const getToolBySlug = async (slug: string): Promise<ToolSummary> => {
+  // Vérifier si on est en mode local (uniquement côté client)
+  if (typeof window !== 'undefined' && useLocalMode()) {
+    const localTools = getLocalToolsAsSummary();
+    // Pour le mode local, on cherche par slug ou par id
+    const tool = localTools.find(t => t.slug === slug || t.id === slug);
+    if (!tool) {
+      throw new Error(`Outil avec le slug ${slug} non trouvé en mode local`);
+    }
+    return tool;
+  }
+  
+  // Mode API normal - slug lookup only (no fallback to ID)
+  const response = await http.get<ToolSummary>(`/tools/slug/${slug}`);
+  return response.data;
+};
+
 export const createTool = async (data: Partial<ToolSummary>): Promise<ToolSummary> => {
   // Vérifier si on est en mode local (uniquement côté client)
   if (typeof window !== 'undefined' && useLocalMode()) {

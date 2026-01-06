@@ -443,7 +443,7 @@ export default function AssistantPage() {
           </aside>
 
           {/* Zone Chat */}
-          <section className="flex h-full flex-col overflow-hidden">
+          <section className="flex h-full flex-col overflow-hidden" style={{ backgroundColor: "rgb(244, 247, 250)" }}>
             <div className="relative flex-1 space-y-0 overflow-y-auto">
               <div className="space-y-10 px-4 py-6">
               {messages.map((m, i) => (
@@ -492,7 +492,7 @@ export default function AssistantPage() {
                     {suggestions.map((s, i) => (
                       <button
                         key={`${s.question}-${i}`}
-                        className="rounded-xl border border-gray-200 bg-transparent p-3 text-left transition-colors hover:bg-gray-50"
+                        className="rounded-xl border border-gray-200 bg-white p-3 text-left transition-colors hover:bg-gray-50"
                         disabled={status === "submitted"}
                         onClick={() => setInput(s.question)}
                       >
