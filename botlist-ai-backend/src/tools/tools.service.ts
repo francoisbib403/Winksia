@@ -263,6 +263,38 @@ export class ToolsService {
     }
   }
 
+  async findBySlug(slug: string): Promise<Tools> {
+    const tool = await this.supabaseHelper.findOneBy('tools', 'slug', slug);
+    if (!tool) {
+      throw new NotFoundException(`Outil IA avec le slug "${slug}" introuvable`);
+    }
+
+    const categories = await this.getToolCategories(tool.id);
+    const subcategory = (tool as any).subcategory_id
+      ? await this.supabaseHelper.findOne('categories', (tool as any).subcategory_id)
+      : null;
+    const screenshots = await this.getToolFiles((tool as any).screenshots || []);
+    const videos = await this.getToolFiles((tool as any).videos || []);
+    const logo = (tool as any).logo_file_id
+      ? await this.supabaseHelper.findOne('files', (tool as any).logo_file_id)
+      : null;
+    const demo = (tool as any).demo_file_id
+      ? await this.supabaseHelper.findOne('files', (tool as any).demo_file_id)
+      : null;
+
+    const toolWithRelations = {
+      ...tool,
+      category: categories,
+      subcategory,
+      screenshots,
+      videos,
+      logo,
+      demo,
+    };
+
+    return toolWithRelations as Tools;
+  }
+
   async findOne(id: string): Promise<Tools> {
     const tool = await this.supabaseHelper.findOne('tools', id);
     if (!tool) {

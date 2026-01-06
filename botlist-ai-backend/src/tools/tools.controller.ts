@@ -53,6 +53,12 @@ export class ToolsController {
     return this.toolsService.findAll();
   }
   @Public()          // ← rend cette route accessible sans jeton
+  @Get('slug/:slug')
+  findBySlug(@Param('slug') slug: string) {
+    return this.toolsService.findBySlug(slug);
+  }
+
+  @Public()          // ← rend cette route accessible sans jeton
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.toolsService.findOne(id);
