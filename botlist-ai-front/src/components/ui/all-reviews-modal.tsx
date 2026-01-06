@@ -3,15 +3,28 @@
 import React from "react"
 import { X, Star } from 'lucide-react'
 import { Button } from "@/components/ui/button"
-import { renderStars } from "@/utils/renderers" // Assurez-vous que ce chemin est correct
+import { renderStars } from "@/utils/renderers"
+import ReviewComments from "./review-comments"
+
+interface ReviewComment {
+  id: string
+  comment: string
+  user: {
+    id: string
+    firstname: string
+    lastname: string
+  }
+  created_at: string
+}
 
 interface Review {
   id: string
   user: string
-  avatar: string // URL or initial for avatar
+  avatar: string
   rating: number
   comment: string
   date: string
+  comments?: ReviewComment[]
 }
 
 interface AllReviewsModalProps {
@@ -112,6 +125,12 @@ export default function AllReviewsModal({
                 </div>
                 <p className="text-gray-700 leading-relaxed mb-3">{review.comment}</p>
                 <p className="text-xs text-gray-500 text-right">{review.date}</p>
+                <ReviewComments
+                  review={{
+                    ...review,
+                    comments: review.comments || [],
+                  }}
+                />
               </div>
             ))
           ) : (

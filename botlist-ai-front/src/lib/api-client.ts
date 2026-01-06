@@ -276,6 +276,19 @@ async getReviews(toolId?: string): Promise<ReviewResponse[]> {
   async updateReviewStatus(reviewId: string, status: 'APPROVED' | 'REJECTED'): Promise<ReviewResponse> {
     return this.patch(`/reviews/${reviewId}/status`, { status });
   }
+
+  // Méthodes pour les commentaires de reviews
+  async createReviewComment(commentData: {
+    review_id: string;
+    user_id: string;
+    comment: string;
+  }): Promise<any> {
+    return this.post('/reviews/comments', commentData);
+  }
+
+  async getReviewComments(reviewId: string): Promise<any[]> {
+    return this.get(`/reviews/${reviewId}/comments`);
+  }
 }
 
 // Instance singleton

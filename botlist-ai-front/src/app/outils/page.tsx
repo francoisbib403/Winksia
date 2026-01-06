@@ -13,12 +13,12 @@ interface ToolDisplay {
   allCategories: string[] // AJOUT : Pour le filtrage
   description: string
   fullDescription: string
-  tagline?: string // Tagline de l'outil
+  tagline: string
+  features: string[]
   rating: number
   reviews: number
   price: string
   priceType: string
-  tags: string[]
   functions: string[]
   domains: string[]
   useCases: string[]
@@ -70,21 +70,6 @@ const adaptToolForDisplay = (tool: any): ToolDisplay => {
     }
   }
 
-  const generateTags = (tool: Tool) => {
-    const tags = []
-    if (tool.features && tool.features.length > 0) {
-      tags.push(...tool.features.slice(0, 2))
-    }
-    if (tool.api_available) tags.push("API")
-    if (tool.open_source) tags.push("Open Source")
-    if (tool.gdpr_compliant) tags.push("GDPR")
-    const remainingCount = (tool.features?.length || 0) - 2
-    if (remainingCount > 0) {
-      tags.push(`+${remainingCount} autres`)
-    }
-    return tags.slice(0, 3)
-  }
-
   const calculateCapabilities = (tool: Tool) => {
     return {
       "Capacité IA": tool.performance_score || 80,
@@ -134,11 +119,11 @@ const adaptToolForDisplay = (tool: any): ToolDisplay => {
     description: tool.description,
     fullDescription: tool.long_description || tool.description,
     tagline: tool.tagline || '', // Tagline de l'outil
+    features: tool.features || [],
     rating: tool.overall_rating,
     reviews: tool.review_count,
     price: getPriceDisplay(tool.pricing_model, tool.pricing_details),
     priceType: getPriceType(tool.pricing_model),
-    tags: generateTags(tool),
     functions: tool.features || [],
     domains: tool.use_cases || [],
     useCases: tool.use_cases || [],

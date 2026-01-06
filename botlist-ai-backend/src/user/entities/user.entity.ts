@@ -13,6 +13,7 @@ import { USER_AUTH_TYPE, USER_OTP_ROLE, USER_ROLE, USER_STATUS } from '../enum';
 import { Exclude } from 'class-transformer';
 import { SessionEntity } from 'src/session/entities/session.entity';
 import { Review } from '../../reviews/entities/review.entity';
+import { ReviewComment } from '../../reviews/entities/review-comment.entity';
 @Entity('user')
 export class User {
   @PrimaryGeneratedColumn('uuid', { name: 'ID' })
@@ -185,10 +186,13 @@ export class User {
   }
 
   @OneToMany(() => Review, (review) => review.user)
-reviews: Review[];
+  reviews: Review[];
 
   @OneToMany(() => SessionEntity, (session) => session.user, {
     cascade: true,
   })
   sessions: SessionEntity[];
+
+  @OneToMany(() => ReviewComment, (comment) => comment.user)
+  reviewComments: ReviewComment[];
 }

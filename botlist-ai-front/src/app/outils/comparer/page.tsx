@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { MessageSquare, Search, ArrowLeft } from "lucide-react"
+import { MessageSquare, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { renderStars, renderCapabilityBar } from "@/utils/renderers"
 import { apiClient } from "@/lib/api-client"
@@ -112,7 +112,6 @@ export default function ComparePage() {
   const [tools, setTools] = useState<ToolDisplay[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
   const [isAiAssistantModalOpen, setIsAiAssistantModalOpen] = useState(false)
   const [iaLoading, setIaLoading] = useState(false)
   const [iaError, setIaError] = useState<string | null>(null)
@@ -220,30 +219,17 @@ export default function ComparePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header identique */}
+      {/* Header - Same as Assistant page */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="w-full px-16 py-4">
-          <div className="grid grid-cols-3 items-center gap-6">
+          <div className="grid grid-cols-2 items-center gap-6">
             {/* Logo */}
             <div className="flex items-center gap-4 justify-self-start">
               <Link href="/" className="flex items-center">
                 <span className="text-xl font-bold text-gray-900">WINKSIA</span>
               </Link>
             </div>
-            {/* Search Bar centré */}
-            <div className="justify-self-center w-full max-w-2xl">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher des outils IA, catégories ou cas d'usage..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
-            </div>
-            {/* Boutons de navigation à droite */}
+            {/* Actions à droite */}
             <div className="flex items-center gap-6 justify-self-end ml-auto">
               <Link href="/outils" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
                 Outils

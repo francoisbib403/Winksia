@@ -197,18 +197,18 @@ export default function Header() {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <button
-                  onClick={openLoginModal}
+                <Link
+                  href="/auth"
                   className="px-4 py-2 text-gray-700 hover:text-blue-900 font-medium transition-colors"
                 >
                   Se connecter
-                </button>
-                <button
-                  onClick={openRegisterModal}
+                </Link>
+                <Link
+                  href="/auth"
                   className="px-6 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-lg font-medium transition-all hover:scale-105"
                 >
                   S'inscrire →
-                </button>
+                </Link>
               </div>
             )}
 

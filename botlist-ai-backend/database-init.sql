@@ -112,6 +112,16 @@ CREATE TABLE IF NOT EXISTS reviews (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Review Comments table (for commenting on reviews)
+CREATE TABLE IF NOT EXISTS review_comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    review_id UUID REFERENCES reviews(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

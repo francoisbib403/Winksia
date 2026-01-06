@@ -1,7 +1,8 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Tools } from '../../tools/entities/tools.entity';
 import { User } from '../../user/entities/user.entity';
 import { ReviewStatus } from '../enums/review-status.enum';
+import { ReviewComment } from './review-comment.entity';
 
 @Entity()
 export class Review {
@@ -22,4 +23,7 @@ export class Review {
 
   @ManyToOne(() => User, (user) => user.reviews, { onDelete: 'CASCADE' })
   user: User;
+
+  @OneToMany(() => ReviewComment, (comment) => comment.review)
+  comments: ReviewComment[];
 }
