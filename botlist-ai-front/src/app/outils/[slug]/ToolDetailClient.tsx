@@ -194,8 +194,10 @@ export default function ToolDetailClient({ tool }: ToolDetailClientProps) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [replyContent, setReplyContent] = useState("")
   const [likedReviews, setLikedReviews] = useState<Set<string>>(new Set())
+  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set())
   const [currentPage, setCurrentPage] = useState(1)
   const reviewsPerPage = 3
+  const maxVisibleReplies = 3
 
   useEffect(() => {
     const fetchLinkPreview = async () => {
@@ -232,25 +234,54 @@ export default function ToolDetailClient({ tool }: ToolDetailClientProps) {
     }
   }
 
-  const handleLikeReview = (reviewId: string) => {
+  const handleLikeReview = (reviewId: string, isReply: boolean = false, parentId?: string) => {
     setLikedReviews(prev => {
       const newLiked = new Set(prev)
-      if (newLiked.has(reviewId)) {
-        newLiked.delete(reviewId)
-        setReviews(prev => prev.map(r => 
-          r.id === reviewId ? { ...r, likes: r.likes - 1 } : r
-        ))
+      const likeId = isReply ? `${parentId}-${reviewId}` : reviewId
+      if (newLiked.has(likeId)) {
+        newLiked.delete(likeId)
+        if (isReply && parentId) {
+          setReviews(prev => prev.map(r => {
+            if (r.id === parentId) {
+              return {
+                ...r,
+                replies: r.replies.map(rep => 
+                  rep.id === reviewId ? { ...rep, likes: rep.likes - 1 } : rep
+                )
+              }
+            }
+            return r
+          }))
+        } else {
+          setReviews(prev => prev.map(r => 
+            r.id === reviewId ? { ...r, likes: r.likes - 1 } : r
+          ))
+        }
       } else {
-        newLiked.add(reviewId)
-        setReviews(prev => prev.map(r => 
-          r.id === reviewId ? { ...r, likes: r.likes + 1 } : r
-        ))
+        newLiked.add(likeId)
+        if (isReply && parentId) {
+          setReviews(prev => prev.map(r => {
+            if (r.id === parentId) {
+              return {
+                ...r,
+                replies: r.replies.map(rep => 
+                  rep.id === reviewId ? { ...rep, likes: rep.likes + 1 } : rep
+                )
+              }
+            }
+            return r
+          }))
+        } else {
+          setReviews(prev => prev.map(r => 
+            r.id === reviewId ? { ...r, likes: r.likes + 1 } : r
+          ))
+        }
       }
       return newLiked
     })
   }
 
-  const handleSubmitReply = (parentId: string) => {
+  const handleSubmitReply = (parentId: string, isNested: boolean = false, grandparentId?: string) => {
     if (!replyContent.trim()) return
     
     const newReply: ReviewComment = {
@@ -265,15 +296,46 @@ export default function ToolDetailClient({ tool }: ToolDetailClientProps) {
       replies: []
     }
 
-    setReviews(prev => prev.map(review => {
-      if (review.id === parentId) {
-        return { ...review, replies: [...review.replies, newReply] }
-      }
-      return review
-    }))
+    if (isNested && grandparentId) {
+      // Add nested reply to a reply
+      setReviews(prev => prev.map(r => {
+        if (r.id === grandparentId) {
+          return {
+            ...r,
+            replies: r.replies.map(rep => {
+              if (rep.id === parentId) {
+                return { ...rep, replies: [...rep.replies, newReply] }
+              }
+              return rep
+            })
+          }
+        }
+        return r
+      }))
+    } else {
+      // Add reply to main review
+      setReviews(prev => prev.map(review => {
+        if (review.id === parentId) {
+          return { ...review, replies: [...review.replies, newReply] }
+        }
+        return review
+      }))
+    }
 
     setReplyContent('')
     setReplyingTo(null)
+  }
+
+  const toggleReplies = (reviewId: string) => {
+    setExpandedReplies(prev => {
+      const newExpanded = new Set(prev)
+      if (newExpanded.has(reviewId)) {
+        newExpanded.delete(reviewId)
+      } else {
+        newExpanded.add(reviewId)
+      }
+      return newExpanded
+    })
   }
 
   const formatDate = (dateStr: string) => {
@@ -663,22 +725,109 @@ export default function ToolDetailClient({ tool }: ToolDetailClientProps) {
                     {/* Replies */}
                     {review.replies.length > 0 && (
                       <div className="mt-4 pl-4 border-l-2 border-gray-100 space-y-3">
-                        {review.replies.map((reply) => (
-                          <div key={reply.id} className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium text-sm">
-                              {reply.userName.charAt(0)}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-900 text-sm">{reply.userName}</span>
-                                <span className="text-xs text-gray-500">
-                                  {formatDate(reply.createdAt)}
-                                </span>
+                        {review.replies.slice(0, expandedReplies.has(review.id) ? review.replies.length : maxVisibleReplies).map((reply) => (
+                          <div key={reply.id} className="pt-3 border-t border-gray-50">
+                            <div className="flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium text-sm">
+                                {reply.userName.charAt(0)}
                               </div>
-                              <p className="mt-1 text-sm text-gray-700">{reply.content}</p>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-gray-900 text-sm">{reply.userName}</span>
+                                  <span className="text-xs text-gray-500">
+                                    {formatDate(reply.createdAt)}
+                                  </span>
+                                </div>
+                                <p className="mt-1 text-sm text-gray-700">{reply.content}</p>
+                                
+                                {/* Reply Actions */}
+                                <div className="flex items-center gap-3 mt-2">
+                                  <button
+                                    onClick={() => handleLikeReview(reply.id, true, review.id)}
+                                    className={`flex items-center gap-1 text-xs transition-colors ${
+                                      likedReviews.has(`${review.id}-${reply.id}`) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+                                    }`}
+                                  >
+                                    <ThumbsUp className={`w-3 h-3 ${likedReviews.has(`${review.id}-${reply.id}`) ? 'fill-current' : ''}`} />
+                                    <span>{reply.likes}</span>
+                                  </button>
+                                  <button
+                                    onClick={() => setReplyingTo(`${review.id}-${reply.id}`)}
+                                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                                  >
+                                    <Reply className="w-3 h-3" />
+                                    <span>Répondre</span>
+                                  </button>
+                                </div>
+
+                                {/* Nested Replies */}
+                                {reply.replies.length > 0 && (
+                                  <div className="mt-3 pl-3 border-l border-gray-200 space-y-2">
+                                    {reply.replies.map((nestedReply) => (
+                                      <div key={nestedReply.id} className="flex items-start gap-2">
+                                        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-medium text-xs">
+                                          {nestedReply.userName.charAt(0)}
+                                        </div>
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-medium text-gray-800 text-xs">{nestedReply.userName}</span>
+                                            <span className="text-xs text-gray-400">
+                                              {formatDate(nestedReply.createdAt)}
+                                            </span>
+                                          </div>
+                                          <p className="mt-0.5 text-xs text-gray-600">{nestedReply.content}</p>
+                                          <button
+                                            onClick={() => handleLikeReview(nestedReply.id, true, reply.id)}
+                                            className={`flex items-center gap-1 mt-1 text-xs transition-colors ${
+                                              likedReviews.has(`${reply.id}-${nestedReply.id}`) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                                            }`}
+                                          >
+                                            <ThumbsUp className={`w-3 h-3 ${likedReviews.has(`${reply.id}-${nestedReply.id}`) ? 'fill-current' : ''}`} />
+                                            <span>{nestedReply.likes}</span>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Nested Reply Form */}
+                                {replyingTo === `${review.id}-${reply.id}` && (
+                                  <div className="mt-2 flex gap-2">
+                                    <input
+                                      type="text"
+                                      value={replyContent}
+                                      onChange={(e) => setReplyContent(e.target.value)}
+                                      placeholder="Répondre..."
+                                      className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                      onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply(reply.id, true, review.id)}
+                                    />
+                                    <Button
+                                      onClick={() => handleSubmitReply(reply.id, true, review.id)}
+                                      size="sm"
+                                      className="px-2 py-1"
+                                      disabled={!replyContent.trim()}
+                                    >
+                                      <Send className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))}
+                        
+                        {review.replies.length > maxVisibleReplies && (
+                          <button
+                            onClick={() => toggleReplies(review.id)}
+                            className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2"
+                          >
+                            {expandedReplies.has(review.id) 
+                              ? 'Voir moins'
+                              : `Voir ${review.replies.length - maxVisibleReplies} réponses de plus`
+                            }
+                          </button>
+                        )}
                       </div>
                     )}
 
@@ -846,19 +995,6 @@ export default function ToolDetailClient({ tool }: ToolDetailClientProps) {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-200 mt-12">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-500 text-sm">© 2024 Winksia. Tous droits réservés.</span>
-            <div className="flex items-center gap-4">
-              <Link href="/outils" className="text-gray-500 hover:text-gray-900 text-sm">Outils</Link>
-              <Link href="/assistant" className="text-gray-500 hover:text-gray-900 text-sm">Assistant</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
