@@ -264,7 +264,33 @@ export class ToolsService {
   }
 
   async findBySlug(slug: string): Promise<Tools> {
-    const tool = await this.supabaseHelper.findOneBy('tools', 'slug', slug);
+    // First try to find by slug
+    let tool = await this.supabaseHelper.findOneBy('tools', 'slug', slug);
+    
+    // If not found by slug, try to find by name (case-insensitive)
+    if (!tool) {
+      const { data } = await this.supabaseHelper.getAdminClient()
+        .from('tools')
+        .select('*')
+        .ilike('name', slug.replace(/-/g, ' '));
+      
+      if (data && data.length > 0) {
+        tool = data[0];
+      }
+    }
+    
+    // If still not found, try exact name match
+    if (!tool) {
+      const { data } = await this.supabaseHelper.getAdminClient()
+        .from('tools')
+        .select('*')
+        .eq('name', slug);
+      
+      if (data && data.length > 0) {
+        tool = data[0];
+      }
+    }
+    
     if (!tool) {
       throw new NotFoundException(`Outil IA avec le slug "${slug}" introuvable`);
     }
