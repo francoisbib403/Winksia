@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react"
 import {
   Search,
-  Bookmark,
   X,
   ExternalLink,
   FileText,
@@ -931,15 +930,16 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
 
                         {/* Actions */}
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              // Bookmark action
-                            }}
+                          <a
+                            href={tool.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                             className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                            title="Visiter le site"
                           >
-                            <Bookmark className="w-5 h-5 text-slate-400 hover:text-amber-500" />
-                          </button>
+                            <ExternalLink className="w-5 h-5 text-slate-400 hover:text-blue-600" />
+                          </a>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()

@@ -1,4 +1,5 @@
 import { getToolBySlug } from "@/lib/useTools"
+import Link from "next/link"
 import ToolDetailClient from "./ToolDetailClient"
 import type { ToolSummary } from "@/types/tool"
 

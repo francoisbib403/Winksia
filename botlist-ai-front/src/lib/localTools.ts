@@ -312,8 +312,8 @@ export const getLocalToolsAsSummary = (): ToolSummary[] => {
   return localTools.map(convertToToolSummary);
 };
 
-// Fonction pour basculer entre mode local et API
-export const useLocalMode = (): boolean => {
+// Fonction utilitaire pour vérifier si le mode local est activé
+export const checkLocalMode = (): boolean => {
   if (typeof window === 'undefined') return false;
   return localStorage.getItem('winksia_local_mode') === 'true';
 };
@@ -330,7 +330,7 @@ export const useLocalTools = () => {
   const [isLocalMode, setIsLocalMode] = useState(false);
 
   useEffect(() => {
-    const localMode = useLocalMode();
+    const localMode = checkLocalMode();
     setIsLocalMode(localMode);
     
     if (localMode) {

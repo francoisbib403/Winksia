@@ -911,9 +911,6 @@ export default function ToolDetailClient({ tool }: ToolDetailClientProps) {
                   Website Coming Soon
                 </button>
               )}
-              <p className="text-center text-sm text-gray-500 mt-3">
-                {tool?.price || "Free"} • {tool?.priceType || ""}
-              </p>
             </div>
 
             {/* Maker Info */}

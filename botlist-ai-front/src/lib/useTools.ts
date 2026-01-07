@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Tool, ToolSummary } from '@/types/tool';
-import { getLocalToolsAsSummary, useLocalMode } from './localTools';
+import { getLocalToolsAsSummary, checkLocalMode, addLocalTool, updateLocalTool, deleteLocalTool } from './localTools';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 const TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || '';
@@ -18,7 +18,7 @@ const getAuthHeader = () => ({
 
 export const getAllTools = async (): Promise<ToolSummary[]> => {
   // Vérifier si on est en mode local (uniquement côté client)
-  if (typeof window !== 'undefined' && useLocalMode()) {
+  if (typeof window !== 'undefined' && checkLocalMode()) {
     return getLocalToolsAsSummary();
   }
   
@@ -35,7 +35,7 @@ export const getAllTools = async (): Promise<ToolSummary[]> => {
 
 export const getToolById = async (id: string): Promise<ToolSummary> => {
   // Vérifier si on est en mode local (uniquement côté client)
-  if (typeof window !== 'undefined' && useLocalMode()) {
+  if (typeof window !== 'undefined' && checkLocalMode()) {
     const localTools = getLocalToolsAsSummary();
     const tool = localTools.find(t => t.id === id);
     if (!tool) {
@@ -51,7 +51,7 @@ export const getToolById = async (id: string): Promise<ToolSummary> => {
 
 export const getToolBySlug = async (slug: string): Promise<ToolSummary> => {
   // Vérifier si on est en mode local (uniquement côté client)
-  if (typeof window !== 'undefined' && useLocalMode()) {
+  if (typeof window !== 'undefined' && checkLocalMode()) {
     const localTools = getLocalToolsAsSummary();
     // Pour le mode local, on cherche par slug ou par id
     const tool = localTools.find(t => t.slug === slug || t.id === slug);
@@ -68,7 +68,7 @@ export const getToolBySlug = async (slug: string): Promise<ToolSummary> => {
 
 export const createTool = async (data: Partial<ToolSummary>): Promise<ToolSummary> => {
   // Vérifier si on est en mode local (uniquement côté client)
-  if (typeof window !== 'undefined' && useLocalMode()) {
+  if (typeof window !== 'undefined' && checkLocalMode()) {
     const newTool: ToolSummary = {
       id: `local-${Date.now()}`,
       name: data.name || 'Nouvel outil',
@@ -131,7 +131,7 @@ export const createTool = async (data: Partial<ToolSummary>): Promise<ToolSummar
 
 export const updateTool = async (id: string, data: Partial<ToolSummary>): Promise<ToolSummary> => {
   // Vérifier si on est en mode local (uniquement côté client)
-  if (typeof window !== 'undefined' && useLocalMode()) {
+  if (typeof window !== 'undefined' && checkLocalMode()) {
     const { updateLocalTool, getLocalToolsAsSummary } = require('./localTools');
     
     // Mise à jour en format LocalTool
@@ -165,7 +165,7 @@ export const updateTool = async (id: string, data: Partial<ToolSummary>): Promis
 
 export const deleteTool = async (id: string): Promise<{ message: string }> => {
   // Vérifier si on est en mode local (uniquement côté client)
-  if (typeof window !== 'undefined' && useLocalMode()) {
+  if (typeof window !== 'undefined' && checkLocalMode()) {
     const { deleteLocalTool } = require('./localTools');
     deleteLocalTool(id);
     return { message: `Outil ${id} supprimé avec succès en mode local` };
