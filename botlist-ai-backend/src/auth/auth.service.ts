@@ -20,7 +20,6 @@ import {
   JwtRefreshPayload,
   TOKEN_ROLE,
 } from './interfaces/payload.interface';
-import { USER_OTP_ROLE, USER_ROLE, USER_STATUS } from 'src/user/enum';
 import { User } from 'src/user/entities/user.entity';
 import * as bcrypt from 'bcryptjs';
 import { generate } from 'otp-generator';
@@ -36,7 +35,7 @@ export class AuthService {
   ) {}
 
   async validate(payload: JwtPayload): Promise<User> {
-    if (payload.role === 'AUTH') {
+    if (payload.role === TOKEN_ROLE.AUTH) {
       const user = await this.userService.findOneByEmail(payload.email);
       if (!user) {
         throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
@@ -52,50 +51,37 @@ export class AuthService {
     }
 
     const user = new User();
-    Object.assign(user, dto, {
-      status: USER_STATUS.ACTIVED,
-      activate: false,
-      role: USER_ROLE.ADMIN,
-    });
-    user.slug = await this.userService.searchSlug(user);
-    const otp = this.generateOtp();
-    Object.assign(user, {
-      otp,
-      otpRole: USER_OTP_ROLE.ACTIVATE,
-      otpTimeGenerate: new Date(),
-    });
+    user.email = dto.email;
+    user.firstname = dto.firstname || '';
+    user.lastname = dto.lastname || '';
+    user.password = dto.password;
+    user.isActive = true; // Users are active immediately (no email confirmation)
+    user.role = 'user';
 
     const savedUser = await this.userService.save(user);
 
-    await this.mailService.sendDefault(
-      dto.email,
-      `${process.env.APP_NAME} code d'activation de compte`,
-      'activate',
-      { otp },
-    );
-
-    const payload: JwtPayload = {
-      email: savedUser.email,
-      role: TOKEN_ROLE.ACTIVATE,
-    };
-    const token = this.jwtService.sign(payload, { expiresIn: '10m' });
-
-    return { activationToken: token, user: savedUser };
+    // Return directly with tokens (no activation email needed)
+    return await this.generateTokens(user);
   }
 
   async login(dto: LoginDto): Promise<LoginResponse> {
     const user = await this.userService.findOneByEmail(dto.email);
-    if (!user?.emailVerified) {
+    
+    if (!user) {
+      throw new HttpException('Invalid credentials', HttpStatus.BAD_REQUEST);
+    }
+
+    if (!user.isActive) {
       throw new ForbiddenException('Account not activated');
     }
 
-    if (user?.status === USER_STATUS.BLOCKED) {
-      throw new ForbiddenException('Account blocked');
+    if (!(await bcrypt.compare(dto.password, user.password))) {
+      throw new HttpException('Invalid credentials', HttpStatus.BAD_REQUEST);
     }
 
-    if (!user || !(await bcrypt.compare(dto.pwd, user.pwd))) {
-      throw new HttpException('Invalid credentials.', HttpStatus.BAD_REQUEST);
-    }
+    // Update last login
+    user.lastLoginAt = new Date();
+    await this.userService.save(user);
 
     return await this.generateTokens(user);
   }
@@ -128,42 +114,45 @@ export class AuthService {
       );
     }
 
-    const user = await this.userService.findOneByEmailAndFailed(payload.email);
+    const user = await this.userService.findOneByEmail(payload.email);
 
     return this.generateTokens(user, session.ip, session.userAgent);
   }
 
-  public async activate(token: string, otp: string): Promise<LoginResponse> {
+  public async activate(token: string, code: string): Promise<LoginResponse> {
     let payload: JwtPayload;
     try {
       payload = this.jwtService.verify(token);
     } catch {
-      throw new BadRequestException('Invalide activateToken');
+      throw new BadRequestException('Invalid activation token');
     }
 
     if (payload.role !== TOKEN_ROLE.ACTIVATE) {
-      throw new BadRequestException('Invalide activateToken');
+      throw new BadRequestException('Invalid activation token');
     }
 
-    const user = await this.userService.findOneByEmailAndFailed(payload.email);
-    if (user.otp !== otp || user.otpRole !== USER_OTP_ROLE.ACTIVATE) {
-      throw new BadRequestException('Bad otp code');
+    const user = await this.userService.findOneByEmail(payload.email);
+    
+    if (user.activationCode !== code) {
+      throw new BadRequestException('Invalid activation code');
     }
 
-    user.emailVerified = true;
-    user.emailVerifiedAt = new Date();
-    user.status = USER_STATUS.ACTIVED;
-    user.otp = null;
-    user.otpRole = null;
-    user.otpTimeGenerate = null;
+    if (user.activationCodeExpiresAt && new Date() > user.activationCodeExpiresAt) {
+      throw new BadRequestException('Activation code expired');
+    }
+
+    user.isActive = true;
+    user.activationCode = null;
+    user.activationCodeExpiresAt = null;
+    
     const userSaved = await this.userService.save(user);
     return await this.generateTokens(userSaved);
   }
 
   async generateTokens(
     user: User,
-    ip?: string,
-    userAgent?: string,
+    ip?: string | null,
+    userAgent?: string | null,
   ): Promise<LoginResponse> {
     const session = await this.sessionService.create(user);
 
@@ -178,7 +167,7 @@ export class AuthService {
     };
 
     const refreshToken = this.jwtService.sign(refreshTokenPayload, {
-      expiresIn: process.env.REFRESH_TOKEN_EXP,
+      expiresIn: process.env.REFRESH_TOKEN_EXP || '7d',
       secret: process.env.REFRESH_SECRET,
     });
 
@@ -199,67 +188,55 @@ export class AuthService {
     return { message: 'Logged out' };
   }
 
-  async sendActivationCode(
-    dto: EmailDto,
-  ): Promise<{ activationToken: string }> {
+  async sendActivationCode(dto: EmailDto): Promise<{ activationToken: string }> {
     const user = await this.userService.findOneByEmail(dto.email);
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
-    const otp = this.generateOtp();
-    Object.assign(user, {
-      otp,
-      otpRole: USER_OTP_ROLE.ACTIVATE,
-      otpTimeGenerate: new Date(),
-    });
+    const activationCode = this.generateActivationCode();
+    user.activationCode = activationCode;
+    user.activationCodeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await this.userService.save(user);
     await this.mailService.sendDefault(
       dto.email,
-      `${process.env.APP_NAME} code d'activation de compte`,
+      `${process.env.APP_NAME} - Code d'activation`,
       'send-activation-code',
-      { otp },
+      { activationCode },
     );
 
     const payload: JwtPayload = {
       email: user.email,
       role: TOKEN_ROLE.ACTIVATE,
     };
-    const token = this.jwtService.sign(payload, { expiresIn: '10m' });
+    const token = this.jwtService.sign(payload, { expiresIn: '24h' });
     return { activationToken: token };
   }
 
-  async sendResetCode(
-    dto: EmailDto,
-  ): Promise<{ verifyResetCodeToken: string }> {
+  async sendResetCode(dto: EmailDto): Promise<{ verifyResetCodeToken: string }> {
     const user = await this.userService.findOneByEmail(dto.email);
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
-    const otp = this.generateOtp();
-    Object.assign(user, {
-      otp,
-      otpRole: USER_OTP_ROLE.RESET,
-      otpTimeGenerate: new Date(),
-    });
+    const resetCode = this.generateActivationCode();
+    user.resetPasswordCode = resetCode;
+    user.resetPasswordCodeExpiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
 
     await this.userService.save(user);
     await this.mailService.sendDefault(
       dto.email,
-      `${process.env.APP_NAME} code de réinitialisation`,
+      `${process.env.APP_NAME} - Code de réinitialisation`,
       'send-reset-code',
-      { otp },
+      { resetCode },
     );
 
     const payload: JwtPayload = {
       email: user.email,
       role: TOKEN_ROLE.CODE_RESET,
     };
-    const token = this.jwtService.sign(payload, { expiresIn: '10m' });
+    const token = this.jwtService.sign(payload, { expiresIn: '1h' });
     return { verifyResetCodeToken: token };
   }
 
-  async verifyResetCode(
-    dto: VerifyResetCodeDto,
-  ): Promise<{ resetToken: string }> {
+  async verifyResetCode(dto: VerifyResetCodeDto): Promise<{ resetToken: string }> {
     const payload: JwtPayload = this.jwtService.verify(
       dto.verifyResetCodeToken,
     );
@@ -268,15 +245,12 @@ export class AuthService {
     }
 
     const user = await this.userService.findOneByEmail(payload.email);
-    if (!user || user.otp !== dto.otp || user.otpRole !== USER_OTP_ROLE.RESET) {
-      throw new HttpException('Bad otp code.', HttpStatus.BAD_REQUEST);
+    if (!user || user.resetPasswordCode !== dto.otp || user.resetPasswordCodeExpiresAt! < new Date()) {
+      throw new HttpException('Invalid or expired reset code.', HttpStatus.BAD_REQUEST);
     }
 
-    Object.assign(user, {
-      otp: null,
-      otpRole: null,
-      otpTimeGenerate: null,
-    });
+    user.resetPasswordCode = null;
+    user.resetPasswordCodeExpiresAt = null;
 
     await this.userService.save(user);
 
@@ -298,14 +272,14 @@ export class AuthService {
     const user = await this.userService.findOneByEmail(payload.email);
     if (!user) throw new HttpException('User not found.', HttpStatus.NOT_FOUND);
 
-    user.pwd = dto.pwd;
+    user.password = dto.password;
     await user.hashPassword();
     const userSaved = await this.userService.save(user);
 
     return this.generateTokens(userSaved);
   }
 
-  private generateOtp(): string {
+  private generateActivationCode(): string {
     return generate(6, {
       upperCaseAlphabets: false,
       specialChars: false,
@@ -322,6 +296,7 @@ export interface LoginResponse {
 }
 
 export interface RegisterResponse {
-  activationToken: string;
+  accessToken: string;
+  refreshToken: string;
   user: User;
 }

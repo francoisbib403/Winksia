@@ -122,19 +122,30 @@ CREATE TABLE IF NOT EXISTS review_comments (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Users table
+-- Users table with enhanced profile fields
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
+    avatar_url VARCHAR(500),
+    bio TEXT,
+    website VARCHAR(255),
+    company VARCHAR(255),
+    job_title VARCHAR(255),
     role VARCHAR(50) NOT NULL DEFAULT 'user',
     is_active BOOLEAN DEFAULT false,
+    is_public_profile BOOLEAN DEFAULT true,
+    preferred_language VARCHAR(10) DEFAULT 'fr',
+    email_notifications BOOLEAN DEFAULT true,
+    push_notifications BOOLEAN DEFAULT false,
+    theme VARCHAR(20) DEFAULT 'light',
     activation_code VARCHAR(255),
     activation_code_expires_at TIMESTAMP WITH TIME ZONE,
     reset_password_code VARCHAR(255),
     reset_password_code_expires_at TIMESTAMP WITH TIME ZONE,
+    last_login_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -210,3 +221,110 @@ INSERT INTO tags (id, name) VALUES
     (gen_random_uuid(), 'Design'),
     (gen_random_uuid(), 'Communication')
 ON CONFLICT DO NOTHING;
+
+-- =====================================================
+-- USER DATA TABLES
+-- =====================================================
+
+-- User Liked Tools table (outils likés par les utilisateurs)
+CREATE TABLE IF NOT EXISTS user_liked_tools (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    tool_id UUID REFERENCES tools(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, tool_id)
+);
+
+-- User Favorites table (outils favoris)
+CREATE TABLE IF NOT EXISTS user_favorites (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    tool_id UUID REFERENCES tools(id) ON DELETE CASCADE,
+    note TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, tool_id)
+);
+
+-- User Reviews Summary table (agrégation des avis par utilisateur)
+CREATE TABLE IF NOT EXISTS user_reviews_summary (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    total_reviews INTEGER DEFAULT 0,
+    average_rating DECIMAL(3,2) DEFAULT 0,
+    five_star_count INTEGER DEFAULT 0,
+    four_star_count INTEGER DEFAULT 0,
+    three_star_count INTEGER DEFAULT 0,
+    two_star_count INTEGER DEFAULT 0,
+    one_star_count INTEGER DEFAULT 0,
+    helpful_votes INTEGER DEFAULT 0,
+    last_review_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- User Activity Log table (journal d'activité utilisateur)
+CREATE TABLE IF NOT EXISTS user_activity (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    action VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(50),
+    entity_id UUID,
+    metadata JSONB DEFAULT '{}',
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =====================================================
+-- CHAT HISTORY TABLES
+-- =====================================================
+
+-- Chat Sessions table (sessions de conversation avec l'assistant)
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255),
+    context JSONB DEFAULT '{}',
+    message_count INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_message_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Chat Messages table (messages individuels du chat)
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID REFERENCES chat_sessions(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+    content TEXT NOT NULL,
+    tokens_used INTEGER,
+    model VARCHAR(100),
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Chat Tools Suggested table (outils suggérés pendant le chat)
+CREATE TABLE IF NOT EXISTS chat_suggested_tools (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    message_id UUID REFERENCES chat_messages(id) ON DELETE CASCADE,
+    tool_id UUID REFERENCES tools(id) ON DELETE CASCADE,
+    relevance_score DECIMAL(3,2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(message_id, tool_id)
+);
+
+-- =====================================================
+-- INDEXES FOR PERFORMANCE
+-- =====================================================
+
+CREATE INDEX IF NOT EXISTS idx_user_liked_tools_user_id ON user_liked_tools(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_liked_tools_tool_id ON user_liked_tools(tool_id);
+CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_favorites_tool_id ON user_favorites(tool_id);
+CREATE INDEX IF NOT EXISTS idx_user_activity_user_id ON user_activity(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_activity_created_at ON user_activity(created_at);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_user_id ON chat_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_last_message ON chat_sessions(last_message_at);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages(session_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON chat_messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_user_id ON chat_messages(user_id);

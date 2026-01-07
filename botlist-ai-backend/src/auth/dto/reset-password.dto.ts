@@ -7,7 +7,7 @@ import {
 export class ResetPasswordDto {
   @IsNotEmpty()
   @IsString()
-  pwd: string;
+  password: string;
 
   @IsNotEmpty()
   @IsJWT()

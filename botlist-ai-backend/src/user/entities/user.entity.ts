@@ -5,22 +5,22 @@ import {
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
-  
   UpdateDateColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
-import { USER_AUTH_TYPE, USER_OTP_ROLE, USER_ROLE, USER_STATUS } from '../enum';
+import { USER_ROLE } from '../enum';
 import { Exclude } from 'class-transformer';
 import { SessionEntity } from 'src/session/entities/session.entity';
 import { Review } from '../../reviews/entities/review.entity';
 import { ReviewComment } from '../../reviews/entities/review-comment.entity';
-@Entity('user')
+
+@Entity('users')
 export class User {
-  @PrimaryGeneratedColumn('uuid', { name: 'ID' })
+  @PrimaryGeneratedColumn('uuid', { name: 'id' })
   id: string;
 
   @Column({
-    name: 'EMAIL',
+    name: 'email',
     type: 'varchar',
     length: 255,
     unique: true,
@@ -29,160 +29,130 @@ export class User {
   email: string;
 
   @Column({
-    name: 'USERNAME',
+    name: 'password',
     type: 'varchar',
     length: 255,
-    nullable: false,
-  })
-  username: string;
-
-  @Column({
-    name: 'SLUG',
-    type: 'varchar',
-    length: 255,
-    unique: true,
-    nullable: false,
-  })
-  slug: string;
-
-  @Column({ name: 'FIRSTNAME', type: 'varchar', length: 255, nullable: false })
-  firstname: string;
-
-  @Column({ name: 'LASTNAME', type: 'varchar', length: 255, nullable: false })
-  lastname: string;
-
-  @Column({ name: 'COMPANY', type: 'varchar', length: 255, nullable: true })
-  company: string;
-
-  @Column({ name: 'JOB_TITLE', type: 'varchar', length: 255, nullable: true })
-  jobTitle: string;
-
-  @Column({ name: 'COMPANY_SIZE', type: 'varchar', length: 50, nullable: true })
-  companySize: string;
-
-  @Column({ name: 'INDUSTRY', type: 'varchar', length: 100, nullable: true })
-  industry: string;
-
-  @Column({
-    name: 'ROLE',
-    type: 'enum',
-    enum: USER_ROLE,
-    default: USER_ROLE.USER,
-  })
-  role: USER_ROLE;
-
-  @Column({
-    name: 'LANGUAGE',
-    type: 'varchar',
-    length: 5,
-    default: 'fr',
-    nullable: false,
-  })
-  language: string;
-
-  @Column({
-    name: 'TIMEZONE',
-    type: 'varchar',
-    length: 50,
-    default: 'Europe/Paris',
-    nullable: false,
-  })
-  timezone: string;
-
-  @Column({
-    name: 'PREFERENCES',
-    type: 'jsonb',
-    default: () => "'{}'",
-    nullable: false,
-  })
-  preferences: Record<string, any>;
-
-  @Column({
-    name: 'PWD',
-    type: 'varchar',
-    length: 255,
-    unique: true,
     nullable: false,
   })
   @Exclude()
-  pwd: string;
+  password: string;
+
+  @Column({ name: 'first_name', type: 'varchar', length: 100, nullable: true })
+  firstname: string;
+
+  @Column({ name: 'last_name', type: 'varchar', length: 100, nullable: true })
+  lastname: string;
+
+  @Column({ name: 'avatar_url', type: 'varchar', length: 500, nullable: true })
+  avatarUrl: string;
+
+  @Column({ name: 'bio', type: 'text', nullable: true })
+  bio: string;
+
+  @Column({ name: 'website', type: 'varchar', length: 255, nullable: true })
+  website: string;
+
+  @Column({ name: 'company', type: 'varchar', length: 255, nullable: true })
+  company: string;
+
+  @Column({ name: 'job_title', type: 'varchar', length: 255, nullable: true })
+  jobTitle: string;
 
   @Column({
-    name: 'EMAIL_VERIFIED',
+    name: 'role',
+    type: 'varchar',
+    length: 50,
+    default: 'user',
+    nullable: false,
+  })
+  role: string;
+
+  @Column({
+    name: 'is_active',
     type: 'boolean',
     default: false,
     nullable: false,
   })
-  emailVerified: boolean;
+  isActive: boolean;
 
   @Column({
-    name: 'EMAIL_VERIFIED_AT',
-    type: 'timestamp',
-    nullable: true,
-  })
-  @Exclude()
-  emailVerifiedAt: Date;
-
-  @Column({
-    name: 'LAST_LOGIN_AT',
-    type: 'timestamp',
-    nullable: true,
-  })
-  @Exclude()
-  lastLoginAt: Date;
-
-  @Column({
-    name: 'STATUS',
-    type: 'enum',
-    enum: USER_STATUS,
-    default: USER_STATUS.BLOCKED,
+    name: 'is_public_profile',
+    type: 'boolean',
+    default: true,
     nullable: false,
   })
-  status: USER_STATUS;
-
-  @Column({ name: 'OTP', type: 'varchar', length: 10, nullable: true })
-  @Exclude()
-  otp: string | null;
+  isPublicProfile: boolean;
 
   @Column({
-    name: 'OTP_ROLE',
-    type: 'enum',
-    enum: USER_OTP_ROLE,
-    nullable: true,
+    name: 'preferred_language',
+    type: 'varchar',
+    length: 10,
+    default: 'fr',
+    nullable: false,
   })
-  @Exclude()
-  otpRole: USER_OTP_ROLE | null;
+  preferredLanguage: string;
 
   @Column({
-    name: 'AUTH_TYPE',
-    type: 'enum',
-    enum: USER_AUTH_TYPE,
-    default: USER_AUTH_TYPE.SIMPLE,
-    nullable: true,
+    name: 'email_notifications',
+    type: 'boolean',
+    default: true,
+    nullable: false,
   })
-  @Exclude()
-  authType: USER_AUTH_TYPE;
+  emailNotifications: boolean;
 
-  @Column({ name: 'OTP_TIME_GENERATE', type: 'timestamptz', nullable: true })
+  @Column({
+    name: 'push_notifications',
+    type: 'boolean',
+    default: false,
+    nullable: false,
+  })
+  pushNotifications: boolean;
+
+  @Column({
+    name: 'theme',
+    type: 'varchar',
+    length: 20,
+    default: 'light',
+    nullable: false,
+  })
+  theme: string;
+
+  @Column({ name: 'activation_code', type: 'varchar', length: 255, nullable: true })
   @Exclude()
-  otpTimeGenerate: Date | null;
+  activationCode: string | null;
+
+  @Column({ name: 'activation_code_expires_at', type: 'timestamptz', nullable: true })
+  @Exclude()
+  activationCodeExpiresAt: Date | null;
+
+  @Column({ name: 'reset_password_code', type: 'varchar', length: 255, nullable: true })
+  @Exclude()
+  resetPasswordCode: string | null;
+
+  @Column({ name: 'reset_password_code_expires_at', type: 'timestamptz', nullable: true })
+  @Exclude()
+  resetPasswordCodeExpiresAt: Date | null;
+
+  @Column({ name: 'last_login_at', type: 'timestamptz', nullable: true })
+  @Exclude()
+  lastLoginAt: Date | null;
 
   @CreateDateColumn({
-    name: 'CREATION_DATE',
+    name: 'created_at',
     type: 'timestamptz',
     nullable: false,
   })
   createdAt: Date;
 
   @UpdateDateColumn({
-    name: 'UPDATED_DATE',
+    name: 'updated_at',
     type: 'timestamptz',
     nullable: false,
   })
   updatedAt: Date;
 
   @BeforeInsert() async hashPassword() {
-    this.pwd = await bcrypt.hash(this.pwd, 10);
+    this.password = await bcrypt.hash(this.password, 10);
   }
 
   @OneToMany(() => Review, (review) => review.user)

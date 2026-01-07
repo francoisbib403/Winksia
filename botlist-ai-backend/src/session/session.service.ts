@@ -1,9 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { SupabaseHelper } from '../supabase/supabase-helper';
 import { SessionEntity } from './entities/session.entity';
-import * as bcrypt from 'bcryptjs';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { User } from 'src/user/entities/user.entity';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class SessionService {
@@ -12,28 +12,36 @@ export class SessionService {
   ) {}
 
   /**
-   * Crée une session avec le hash du refresh token
+   * Crée une session avec le refresh token
    */
   async create(user: User): Promise<SessionEntity> {
     const session = new SessionEntity();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
     Object.assign(session, {
-      hash: null,
+      userId: user.id,
+      token: null,
+      refreshToken: null,
+      deviceType: null,
+      deviceName: null,
       ip: null,
       userAgent: null,
-      user,
+      isActive: true,
+      expiresAt,
+      lastUsedAt: null,
     });
 
-    return this.supabaseHelper.create('sessions', session) as Promise<SessionEntity>;
+    return this.supabaseHelper.create('user_sessions', session) as Promise<SessionEntity>;
   }
 
   /**
-   * Mettre à jour une session avec le hash du refresh token
+   * Mettre à jour une session avec le refresh token
    */
   async update(
     sessionId: string,
-    token: string,
-    ip?: string,
-    userAgent?: string,
+    refreshToken: string,
+    ip?: string | null,
+    userAgent?: string | null,
   ): Promise<SessionEntity> {
     const session = await this.findValidSession(sessionId);
     if (!session) {
@@ -42,29 +50,32 @@ export class SessionService {
         HttpStatus.UNAUTHORIZED,
       );
     }
-    const hash = await bcrypt.hash(token, 10);
-    session.hash = hash;
-    session.ip = ip;
-    session.userAgent = userAgent;
 
-    return this.supabaseHelper.update('sessions', sessionId, session) as Promise<SessionEntity>;
+    session.refreshToken = refreshToken;
+    session.ip = ip || null;
+    session.userAgent = userAgent || null;
+    session.lastUsedAt = new Date();
+
+    return this.supabaseHelper.update('user_sessions', sessionId, session) as Promise<SessionEntity>;
   }
 
   /**
    * Trouve une session valide par ID
    */
   async findValidSession(sessionId: string): Promise<SessionEntity | null> {
-    const sessions = await this.supabaseHelper.findManyBy('sessions', 'id', sessionId);
+    const sessions = await this.supabaseHelper.findManyBy('user_sessions', 'id', sessionId);
     if (sessions.length === 0) return null;
     
     const session = sessions[0];
     if (session.revokedAt) return null;
+    if (session.expires_at && new Date(session.expires_at) < new Date()) return null;
+    if (!session.is_active) return null;
     
     return session as SessionEntity;
   }
 
   /**
-   * Vérifie si un refresh token correspond au hash stocké
+   * Vérifie si un refresh token correspond à celui stocké
    */
   async validateRefreshToken(
     sessionId: string,
@@ -73,8 +84,7 @@ export class SessionService {
     const session = await this.findValidSession(sessionId);
     if (!session) return null;
 
-    const isMatch = await bcrypt.compare(refreshToken, session.hash);
-    if (!isMatch) return null;
+    if (session.refreshToken !== refreshToken) return null;
 
     return session.user;
   }
@@ -83,7 +93,10 @@ export class SessionService {
    * Révoque une session (ex: logout ou token volé)
    */
   async revokeSession(sessionId: string): Promise<void> {
-    await this.supabaseHelper.update('sessions', sessionId, { revokedAt: new Date() });
+    await this.supabaseHelper.update('user_sessions', sessionId, { 
+      revokedAt: new Date(),
+      isActive: false 
+    });
   }
 
   /**
@@ -92,14 +105,17 @@ export class SessionService {
   async revokeAllSessionsForUser(userId: string): Promise<void> {
     // Find all sessions for this user that are not revoked
     const sessions = await this.supabaseHelper.query(
-      'sessions',
+      'user_sessions',
       (query: any) => query.select('*').eq('user_id', userId).is('revoked_at', 'null')
     );
 
     // Update all sessions to revoke them
     if (sessions && sessions.length > 0) {
       for (const session of sessions) {
-        await this.supabaseHelper.update('sessions', session.id, { revokedAt: new Date() });
+        await this.supabaseHelper.update('user_sessions', session.id, { 
+          revokedAt: new Date(),
+          isActive: false 
+        });
       }
     }
   }
@@ -113,7 +129,7 @@ export class SessionService {
 
     // Find expired sessions
     const sessions = await this.supabaseHelper.query(
-      'sessions',
+      'user_sessions',
       (query: any) => query.select('*').lt('created_at', ninetyDaysAgo.toISOString()).is('revoked_at', 'null')
     );
 

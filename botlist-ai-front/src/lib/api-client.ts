@@ -165,7 +165,7 @@ class ApiClient {
   async login(email: string, password: string): Promise<LoginResponse> {
     const response = await this.post<LoginResponse>('/auth/login', {
       email,
-      pwd: password,
+      password,
     });
     
     if (typeof window !== 'undefined' && response.accessToken) {
@@ -189,16 +189,11 @@ class ApiClient {
 
   async register(userData: {
     email: string;
-    username: string;
-    firstname: string;
-    lastname: string;
-    company?: string;
-    jobTitle?: string;
-    companySize?: string;
-    industry?: string;
-    pwd: string;
-  }) {
-    return this.post('/auth/register', userData);
+    firstname?: string;
+    lastname?: string;
+    password: string;
+  }): Promise<LoginResponse> {
+    return this.post<LoginResponse>('/auth/register', userData);
   }
 
   async refreshToken(): Promise<{ accessToken: string; user: any }> {

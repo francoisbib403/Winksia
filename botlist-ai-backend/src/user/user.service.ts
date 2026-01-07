@@ -5,13 +5,10 @@ import {
 } from '@nestjs/common';
 import { SupabaseHelper } from '../supabase/supabase-helper';
 import { User } from './entities/user.entity';
-import slugify from 'slugify';
 import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MailService } from 'src/mail/mail.service';
-import { USER_STATUS } from './enum';
-import otpGenerator from 'otp-generator';
 
 @Injectable()
 export class UserService {
@@ -67,11 +64,8 @@ export class UserService {
 
     Object.assign(user, {
       ...dto,
-      activate: false,
-      status: USER_STATUS.BLOCKED,
+      isActive: false,
     });
-
-    user.slug = await this.searchSlug(user);
 
     // Hash password before saving
     await user.hashPassword();
@@ -89,10 +83,10 @@ export class UserService {
   }
 
   async changePassword(user: User, currentPwd: string, newPwd: string) {
-    const isMatch = await bcrypt.compare(currentPwd, user.pwd);
+    const isMatch = await bcrypt.compare(currentPwd, user.password);
     if (!isMatch) throw new ConflictException('Invalid credentials');
 
-    user.pwd = newPwd;
+    user.password = newPwd;
     await user.hashPassword();
     
     const updatedUser = await this.supabaseHelper.update('users', user.id, user);
@@ -103,7 +97,7 @@ export class UserService {
     const user = await this.findOneByEmailAndFailed(email);
     const newPwd = this.generatePassword();
 
-    user.pwd = newPwd;
+    user.password = newPwd;
     await user.hashPassword();
 
     await this.mailService.sendDefault(
@@ -111,7 +105,7 @@ export class UserService {
       `Réinitialisation mot de passe ${process.env.APP_NAME}`,
       'reset-password',
       {
-        pwd: user.pwd,
+        password: user.password,
         url: process.env.FRONT_HOST,
       },
     );
@@ -133,28 +127,12 @@ export class UserService {
     }
   }
 
-  async searchSlug(user: User): Promise<string> {
-    const baseSlug = slugify(`${user.firstname} ${user.lastname}`, {
-      lower: true,
-      strict: true,
-    });
-
-    let slug = baseSlug;
-    let count = 1;
-
-    while (await this.supabaseHelper.findOneBy('users', 'slug', slug)) {
-      slug = `${baseSlug}-${count++}`;
-    }
-
-    return slug;
-  }
-
   private generatePassword(): string {
-    return otpGenerator.generate(8, {
-      upperCaseAlphabets: true,
-      specialChars: true,
-      lowerCaseAlphabets: true,
-      digits: true,
-    });
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
   }
 }
