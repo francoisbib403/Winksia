@@ -56,10 +56,14 @@ export interface ApiError {
 
 class ApiClient {
   private instance: any;
+  private baseURL: string;
 
   constructor() {
+    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    console.log('🔧 ApiClient initialized with baseURL:', this.baseURL);
+    
     this.instance = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
+      baseURL: this.baseURL,
       timeout: 15000,
       withCredentials: true,
       headers: {
@@ -97,6 +101,21 @@ class ApiClient {
       },
       async (error: any) => {
         const originalRequest = error.config;
+        
+        console.error('❌ API Error Details:', {
+          message: error.message,
+          code: error.code,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          url: error.config?.url,
+          baseURL: error.config?.baseURL,
+        });
+        
+        // Handle network errors
+        if (error.code === 'ERR_NETWORK') {
+          console.error('🌐 Network Error - Backend may be unreachable at:', error.config?.baseURL);
+        }
         
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;

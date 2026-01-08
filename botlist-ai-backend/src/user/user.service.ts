@@ -70,7 +70,7 @@ export class UserService {
     // Hash password before saving
     await user.hashPassword();
 
-    const createdUser = await this.supabaseHelper.create('users', user);
+    const createdUser = await this.supabaseHelper.create('users', user.toDatabaseFormat());
     return createdUser as User;
   }
 
@@ -89,7 +89,7 @@ export class UserService {
     user.password = newPwd;
     await user.hashPassword();
     
-    const updatedUser = await this.supabaseHelper.update('users', user.id, user);
+    const updatedUser = await this.supabaseHelper.update('users', user.id, user.toDatabaseFormat());
     return updatedUser as User;
   }
 
@@ -110,7 +110,7 @@ export class UserService {
       },
     );
 
-    await this.supabaseHelper.update('users', user.id, user);
+    await this.supabaseHelper.update('users', user.id, user.toDatabaseFormat());
   }
 
   async remove(id: string): Promise<void> {
@@ -119,10 +119,10 @@ export class UserService {
 
   async save(user: User): Promise<User> {
     if (user.id) {
-      const updatedUser = await this.supabaseHelper.update('users', user.id, user);
+      const updatedUser = await this.supabaseHelper.update('users', user.id, user.toDatabaseFormat());
       return updatedUser as User;
     } else {
-      const createdUser = await this.supabaseHelper.create('users', user);
+      const createdUser = await this.supabaseHelper.create('users', user.toDatabaseFormat());
       return createdUser as User;
     }
   }

@@ -85,8 +85,22 @@ function RegisterContent() {
         window.location.href = '/outils'
       }
     } catch (error: any) {
-      console.error('Erreur inscription:', error)
-      addToast(error.message || 'Erreur lors de l\'inscription', 'error')
+      console.error('Erreur inscription:', error);
+      
+      // Extraire le message d'erreur
+      let errorMessage = 'Erreur lors de l\'inscription';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      addToast(errorMessage, 'error');
     } finally {
       setIsLoading(false)
     }

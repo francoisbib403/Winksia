@@ -4,6 +4,7 @@ import { SessionEntity } from './entities/session.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { User } from 'src/user/entities/user.entity';
 import * as jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class SessionService {
@@ -20,7 +21,7 @@ export class SessionService {
 
     Object.assign(session, {
       userId: user.id,
-      token: null,
+      token: uuidv4(), // Generate unique token to satisfy NOT NULL constraint
       refreshToken: null,
       deviceType: null,
       deviceName: null,
@@ -31,7 +32,7 @@ export class SessionService {
       lastUsedAt: null,
     });
 
-    return this.supabaseHelper.create('user_sessions', session) as Promise<SessionEntity>;
+    return this.supabaseHelper.create('user_sessions', session.toDatabaseFormat()) as Promise<SessionEntity>;
   }
 
   /**
@@ -56,7 +57,13 @@ export class SessionService {
     session.userAgent = userAgent || null;
     session.lastUsedAt = new Date();
 
-    return this.supabaseHelper.update('user_sessions', sessionId, session) as Promise<SessionEntity>;
+    // Supabase returns snake_case keys directly, no need for toDatabaseFormat()
+    return this.supabaseHelper.update('user_sessions', sessionId, {
+      refresh_token: session.refreshToken,
+      ip_address: session.ip,
+      user_agent: session.userAgent,
+      last_used_at: session.lastUsedAt,
+    }) as Promise<SessionEntity>;
   }
 
   /**

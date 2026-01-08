@@ -155,6 +155,34 @@ export class User {
     this.password = await bcrypt.hash(this.password, 10);
   }
 
+  // Serialize to database format with snake_case column names
+  toDatabaseFormat() {
+    return {
+      id: this.id,
+      email: this.email,
+      password: this.password,
+      first_name: this.firstname || '',
+      last_name: this.lastname || '',
+      avatar_url: this.avatarUrl,
+      bio: this.bio,
+      website: this.website,
+      company: this.company,
+      job_title: this.jobTitle,
+      role: this.role || 'user',
+      is_active: this.isActive ?? false,
+      is_public_profile: this.isPublicProfile ?? true,
+      preferred_language: this.preferredLanguage || 'fr',
+      email_notifications: this.emailNotifications ?? true,
+      push_notifications: this.pushNotifications ?? false,
+      theme: this.theme || 'light',
+      activation_code: this.activationCode,
+      activation_code_expires_at: this.activationCodeExpiresAt,
+      reset_password_code: this.resetPasswordCode,
+      reset_password_code_expires_at: this.resetPasswordCodeExpiresAt,
+      last_login_at: this.lastLoginAt,
+    };
+  }
+
   @OneToMany(() => Review, (review) => review.user)
   reviews: Review[];
 

@@ -55,11 +55,25 @@ function LoginContent() {
         throw new Error("Token d'accès manquant")
       }
     } catch (error: any) {
-      console.error('Erreur de connexion:', error)
-      addToast(error.message || 'Erreur de connexion', 'error')
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('user_data')
-      localStorage.removeItem('user')
+      console.error('Erreur de connexion:', error);
+      
+      // Extraire le message d'erreur
+      let errorMessage = 'Erreur de connexion';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      addToast(errorMessage, 'error');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user_data');
+      localStorage.removeItem('user');
     } finally {
       setIsLoading(false)
     }

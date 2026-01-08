@@ -64,4 +64,24 @@ export class SessionEntity {
     },
   ])
   user: User;
+
+  // Serialize to database format with snake_case column names
+  toDatabaseFormat() {
+    return {
+      id: this.id,
+      user_id: this.userId,
+      token: this.token,
+      refresh_token: this.refreshToken,
+      device_type: this.deviceType,
+      device_name: this.deviceName,
+      ip_address: this.ip,
+      user_agent: this.userAgent,
+      is_active: this.isActive,
+      expires_at: this.expiresAt,
+      last_used_at: this.lastUsedAt,
+      created_at: this.createdAt,
+      updated_at: this.updatedAt,
+      revoked_at: this.revokedAt,
+    };
+  }
 }
