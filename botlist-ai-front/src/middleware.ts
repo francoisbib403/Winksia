@@ -17,13 +17,6 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Allow public routes
-  for (const path of publicRoutes) {
-    if (pathname === path || pathname.startsWith(path + '/')) {
-      return NextResponse.next()
-    }
-  }
-
   // Check for authentication token
   const accessToken = request.cookies.get('access_token')?.value || 
     request.cookies.get('accessToken')?.value ||
@@ -32,8 +25,27 @@ export function middleware(request: NextRequest) {
   const userData = request.cookies.get('user_data')?.value ||
     request.cookies.get('userData')?.value
 
+  const isAuthenticated = !!(accessToken || userData)
+
+  // If user is authenticated and trying to access home page, redirect to tools
+  if (isAuthenticated && pathname === '/') {
+    return NextResponse.redirect(new URL('/outils', request.url))
+  }
+
+  // If user is authenticated and trying to access login/register, redirect to tools
+  if (isAuthenticated && (pathname === '/login' || pathname === '/register')) {
+    return NextResponse.redirect(new URL('/outils', request.url))
+  }
+
+  // Allow public routes for non-authenticated users
+  for (const path of publicRoutes) {
+    if (pathname === path || pathname.startsWith(path + '/')) {
+      return NextResponse.next()
+    }
+  }
+
   // If no token or user data, redirect to login
-  if (!accessToken && !userData) {
+  if (!isAuthenticated) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)

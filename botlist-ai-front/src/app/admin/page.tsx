@@ -1603,14 +1603,49 @@ Cette action est irréversible.`)) {
     }
   }, [loginForm.email, loginForm.password]);
 
-  // FONCTION DE DÉCONNEXION
-  const handleLogout = useCallback(() => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_data');
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    alert('✅ Déconnexion réussie !');
-  }, []);
+// Fonction utilitaire pour supprimer tous les cookies
+function deleteAllCookies() {
+  const cookies = document.cookie.split(';');
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i];
+    const eqPos = cookie.indexOf('=');
+    const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=' + window.location.hostname;
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.' + window.location.hostname;
+  }
+}
+
+// Fonction pour effacer le localStorage complètement
+function clearAllStorage() {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('user_data');
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+  sessionStorage.clear();
+}
+
+// FONCTION DE DÉCONNEXION CORRIGÉE
+const handleLogout = useCallback(() => {
+  console.log('🔄 Déconnexion en cours...');
+  
+  // 1. Supprimer tous les cookies
+  deleteAllCookies();
+  
+  // 2. Effacer complètement le localStorage
+  clearAllStorage();
+  
+  // 3. Réinitialiser les états
+  setIsAuthenticated(false);
+  setCurrentUser(null);
+  
+  console.log('✅ Déconnexion réussie !');
+  
+  // 4. Forcer un rechargement complet de la page
+  setTimeout(() => {
+    window.location.href = '/';
+  }, 100);
+}, []);
 
   // Calculs des statistiques mémorisés
   const stats = useMemo(() => ({

@@ -3,6 +3,64 @@ import bcrypt from 'bcryptjs';
 import * as db from './supabase';
 import { userToResponse } from '@/types/auth';
 
+// Interface Supabase (snake_case)
+interface SupabaseUser {
+  id: string;
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  avatar_url: string | null;
+  bio: string | null;
+  website: string | null;
+  company: string | null;
+  job_title: string | null;
+  role: string;
+  is_active: boolean;
+  is_public_profile: boolean;
+  preferred_language: string;
+  email_notifications: boolean;
+  push_notifications: boolean;
+  theme: string;
+  activation_code: string | null;
+  activation_code_expires_at: string | null;
+  reset_password_code: string | null;
+  reset_password_code_expires_at: string | null;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Convert Supabase data (snake_case) to User interface (camelCase)
+function supabaseToUser(data: SupabaseUser): User {
+  return {
+    id: data.id,
+    email: data.email,
+    password: data.password,
+    firstname: data.first_name || '',
+    lastname: data.last_name || '',
+    avatarUrl: data.avatar_url || undefined,
+    bio: data.bio || undefined,
+    website: data.website || undefined,
+    company: data.company || undefined,
+    jobTitle: data.job_title || undefined,
+    role: data.role,
+    isActive: data.is_active,
+    isPublicProfile: data.is_public_profile,
+    preferredLanguage: data.preferred_language,
+    emailNotifications: data.email_notifications,
+    pushNotifications: data.push_notifications,
+    theme: data.theme,
+    activationCode: data.activation_code || null,
+    activationCodeExpiresAt: data.activation_code_expires_at || null,
+    resetPasswordCode: data.reset_password_code || null,
+    resetPasswordCodeExpiresAt: data.reset_password_code_expires_at || null,
+    lastLoginAt: data.last_login_at || null,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
+}
+
 export interface User {
   id: string;
   email: string;
@@ -57,27 +115,29 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 export async function findAll(): Promise<User[]> {
-  const users = await db.findAll<User>('users');
-  return users;
+  const users = await db.findAll<SupabaseUser>('users');
+  return users.map(supabaseToUser);
 }
 
 export async function findOneByEmail(email: string): Promise<User | null> {
-  return db.findOneBy<User>('users', 'email', email);
+  const user = await db.findOneBy<SupabaseUser>('users', 'email', email);
+  return user ? supabaseToUser(user) : null;
 }
 
 export async function findOneById(id: string): Promise<User | null> {
-  return db.findOne<User>('users', id);
+  const user = await db.findOne<SupabaseUser>('users', id);
+  return user ? supabaseToUser(user) : null;
 }
 
 export async function checkEmail(email: string, excludeId?: string): Promise<boolean> {
   if (excludeId) {
-    const users = await db.query<User>(
+    const users = await db.query<SupabaseUser>(
       'users',
       (query: any) => query.select('*').eq('email', email).neq('id', excludeId)
     );
     return users.length > 0;
   }
-  const user = await db.findOneBy<User>('users', 'email', email);
+  const user = await db.findOneBy<SupabaseUser>('users', 'email', email);
   return !!user;
 }
 
@@ -103,7 +163,8 @@ export async function create(dto: CreateUserDto): Promise<User> {
     theme: 'light',
   };
   
-  return db.create<User>('users', userData);
+  const user = await db.create<SupabaseUser>('users', userData);
+  return supabaseToUser(user);
 }
 
 export async function update(id: string, dto: UpdateUserDto): Promise<User> {
@@ -127,7 +188,8 @@ export async function update(id: string, dto: UpdateUserDto): Promise<User> {
   if (dto.pushNotifications !== undefined) updateData.push_notifications = dto.pushNotifications;
   if (dto.theme !== undefined) updateData.theme = dto.theme;
   
-  return db.update<User>('users', id, updateData);
+  const updatedUser = await db.update<SupabaseUser>('users', id, updateData);
+  return supabaseToUser(updatedUser);
 }
 
 export async function changePassword(userId: string, currentPassword: string, newPassword: string): Promise<User> {
@@ -142,7 +204,8 @@ export async function changePassword(userId: string, currentPassword: string, ne
   }
   
   const hashedPassword = await hashPassword(newPassword);
-  return db.update<User>('users', userId, { password: hashedPassword });
+  const updatedUser = await db.update<SupabaseUser>('users', userId, { password: hashedPassword });
+  return supabaseToUser(updatedUser);
 }
 
 export async function updateLastLogin(userId: string): Promise<void> {

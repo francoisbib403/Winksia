@@ -12,11 +12,11 @@ RUN npm install --legacy-peer-deps
 # Copier le reste des fichiers de l'application
 COPY . .
 
-# Compiler l'application
+# Compiler l'application Next.js
 RUN npm run build
 
-# Exposer le port utilisé par l'application
-EXPOSE 8020
+# Exposer le port utilisé par l'application (Next.js utilise le port 3000 par défaut)
+EXPOSE 3000
 
 # Lancer l'application
-CMD ["npm", "start"]
+CMD ["npm", "run", "start"]

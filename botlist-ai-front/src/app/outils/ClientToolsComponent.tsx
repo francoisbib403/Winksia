@@ -30,7 +30,10 @@ import {
   MessageSquare,
   MessageCircle,
   Smartphone,
+  LogOut,
+  User,
 } from "lucide-react"
+import * as Popover from "@radix-ui/react-popover"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -234,11 +237,9 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_data');
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    window.location.reload(); // Reload to update state
+    // Unifie la déconnexion: efface cookies + storage et force un reload
+    // Ajoute des logs pour valider l'effacement
+    import('@/lib/logout').then(({ logoutClient }) => logoutClient('/'))
   };
 
   const [searchQuery, setSearchQuery] = useState("")
@@ -778,9 +779,57 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
               <Link href="/assistant" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
                 Chat
               </Link>
-              <span className="text-gray-400 font-medium">Classement</span>
+              <Link href="/classement" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
+                Classement
+              </Link>
               {isAuthenticated && currentUser ? (
-                <UserAvatar user={currentUser} onLogout={handleLogout} />
+                <Popover.Root>
+                  <Popover.Trigger asChild>
+                    <button
+                      className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-colors"
+                      type="button"
+                    >
+                      <span className="text-sm">
+                        {currentUser?.firstname && currentUser?.lastname
+                          ? `${currentUser.firstname[0]}${currentUser.lastname[0]}`.toUpperCase()
+                          : currentUser?.firstname?.[0]?.toUpperCase() || currentUser?.email?.[0]?.toUpperCase() || "?"}
+                      </span>
+                    </button>
+                  </Popover.Trigger>
+                  <Popover.Portal>
+                    <Popover.Content
+                      className="w-48 bg-white rounded-lg shadow-lg border p-2 z-50"
+                      sideOffset={5}
+                      align="end"
+                    >
+                      <div className="px-3 py-2 border-b mb-2">
+                        <p className="font-medium text-gray-900 truncate">
+                          {currentUser?.firstname && currentUser?.lastname
+                            ? `${currentUser.firstname} ${currentUser.lastname}`
+                            : currentUser?.firstname || currentUser?.email?.split("@")[0] || "Utilisateur"}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">{currentUser?.email}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Link
+                          href="/profile"
+                          className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <User size={16} />
+                          <span>Mon profil</span>
+                        </Link>
+                        <button
+                          className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                          onClick={handleLogout}
+                        >
+                          <LogOut size={16} />
+                          <span>Déconnexion</span>
+                        </button>
+                      </div>
+                      <Popover.Arrow className="fill-white" />
+                    </Popover.Content>
+                  </Popover.Portal>
+                </Popover.Root>
               ) : (
                 <Link href="/login" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
                   Se connecter

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useLocalMode, setLocalMode } from "@/lib/localTools";
+import { checkLocalMode, setLocalMode } from "@/lib/localTools";
 
 export default function LocalModeToggle() {
   const [isLocalMode, setIsLocalMode] = useState(false);
@@ -9,7 +9,7 @@ export default function LocalModeToggle() {
 
   useEffect(() => {
     setMounted(true);
-    setIsLocalMode(useLocalMode());
+    setIsLocalMode(checkLocalMode());
   }, []);
 
   const handleToggle = () => {

@@ -1,17 +1,41 @@
 "use client";
 
-import { Eye, LogOut } from "lucide-react";
+import { Eye, LogOut, User, Settings, ChevronDown } from "lucide-react";
 import Link from "next/link"
 import React, { useState, useEffect } from 'react';
 import RegisterModal from './RegisterModal';
 import OTPModal from './OTPModal';
 import SuccessModal from './SuccessModal';
 import LoginModal from './LoginModal';
+import * as Popover from '@radix-ui/react-popover';
+
+// Fonction utilitaire pour supprimer tous les cookies
+function deleteAllCookies() {
+  const cookies = document.cookie.split(';');
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i];
+    const eqPos = cookie.indexOf('=');
+    const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=' + window.location.hostname;
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.' + window.location.hostname;
+  }
+}
+
+// Fonction pour effacer le localStorage complètement
+function clearAllStorage() {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('user_data');
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+  sessionStorage.clear();
+}
 
 export default function Header() {
   // ÉTATS D'AUTHENTIFICATION - IDENTIQUES AU DASHBOARD
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Modal states
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
@@ -92,21 +116,14 @@ export default function Header() {
     }
   }
 
-  // FONCTION DE LOGOUT CORRIGÉE - IDENTIQUE AU DASHBOARD
-  const handleLogout = () => {
-    // Nettoyer tous les formats de stockage
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('user'); // Ancien format
-    
-    // Réinitialiser les états
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    
-    console.log('✅ Déconnexion réussie !');
-    
-    // Optionnel: redirection ou toast
-    // window.location.reload(); // Si vous voulez recharger la page
+  // FONCTION DE LOGOUT UNIFIÉE
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🔄 Déconnexion en cours...');
+    // Utilise le helper commun (efface cookies + storage + refresh cookie côté serveur)
+    const { logoutClient } = await import('@/lib/logout');
+    await logoutClient('/');
   }
 
   const openRegisterModal = () => {
@@ -183,28 +200,70 @@ export default function Header() {
 
           {/* Buttons */}
           <div className="flex items-center gap-3 justify-self-end">
-            {/* SECTION UTILISATEUR AVEC AVATAR PERSONNALISÉ */}
+            {/* SECTION UTILISATEUR AVEC MENU PROFILE */}
             {isAuthenticated && currentUser ? (
-              <button
-                className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border bg-blue-900 text-white font-semibold hover:bg-blue-800 transition-colors"
-                type="button"
-                aria-haspopup="dialog"
-                aria-expanded="false"
-                aria-controls="radix-_r_0_"
-                data-state="closed"
-                onClick={handleLogout}
-              >
-                {hasExternalAvatar ? (
-                  /* biome-ignore lint/performance/noImgElement: Using img for external avatar */
-                  <img
-                    alt={getUserDisplayName()}
-                    className="h-full w-full rounded-full object-cover"
-                    src={hasExternalAvatar}
-                  />
-                ) : (
-                  <span className="text-sm">{getUserInitials()}</span>
-                )}
-              </button>
+              <Popover.Root open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+                <Popover.Trigger asChild>
+                  <button
+                    className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-colors relative"
+                    type="button"
+                  >
+                    {hasExternalAvatar ? (
+                      /* biome-ignore lint/performance/noImgElement: Using img for external avatar */
+                      <img
+                        alt={getUserDisplayName()}
+                        className="h-full w-full rounded-full object-cover"
+                        src={hasExternalAvatar}
+                      />
+                    ) : (
+                      <span className="text-sm">{getUserInitials()}</span>
+                    )}
+                  </button>
+                </Popover.Trigger>
+                
+                <Popover.Portal>
+                  <Popover.Content
+                    className="w-56 bg-white rounded-lg shadow-lg border p-2 z-50"
+                    sideOffset={5}
+                    align="end"
+                  >
+                    {/* User info */}
+                    <div className="px-3 py-2 border-b mb-2">
+                      <p className="font-medium text-gray-900 truncate">{getUserDisplayName()}</p>
+                      <p className="text-sm text-gray-500 truncate">{currentUser?.email}</p>
+                    </div>
+                    
+                    {/* Menu items */}
+                    <div className="space-y-1">
+                      <Link
+                        href="/profile"
+                        className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        <User size={16} />
+                        <span>Mon profil</span>
+                      </Link>
+                      <Link
+                        href="/admin"
+                        className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        <Settings size={16} />
+                        <span>Administration</span>
+                      </Link>
+                      <button
+                        className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        onClick={handleLogout}
+                      >
+                        <LogOut size={16} />
+                        <span>Déconnexion</span>
+                      </button>
+                    </div>
+                    
+                    <Popover.Arrow className="fill-white" />
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
             ) : (
               <div className="flex items-center gap-3">
                 <Link

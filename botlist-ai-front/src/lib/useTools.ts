@@ -38,3 +38,12 @@ export const getToolBySlug = async (slug: string): Promise<ToolSummary | null> =
   const { getToolBySlug: getFromSupabase } = await import('./services/tools.service');
   return getFromSupabase(slug);
 };
+
+// Functions for admin panel - these should be implemented with proper API calls
+export const createTool = async (data: any): Promise<any> => {
+  throw new Error('createTool is not implemented in useTools. It should call the backend API.');
+};
+
+export const updateTool = async (id: string, data: any): Promise<any> => {
+  throw new Error('updateTool is not implemented in useTools. It should call the backend API.');
+};

@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
     company VARCHAR(255),
     job_title VARCHAR(255),
     role VARCHAR(50) NOT NULL DEFAULT 'user',
-    is_active BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
     is_public_profile BOOLEAN DEFAULT true,
     preferred_language VARCHAR(10) DEFAULT 'fr',
     email_notifications BOOLEAN DEFAULT true,

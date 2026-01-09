@@ -232,21 +232,11 @@ export async function POST(request: NextRequest) {
 
     // Appel prioritaire à OpenRouter (perplexity/sonar)
     if (!OPENROUTER_API_KEY) {
-      // Clé absente → fallback direct vers backend
-      const fallback = await fetch(`${BACKEND_URL}/assistant/ask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!fallback.ok) {
-        const err = await fallback.text();
-        return NextResponse.json(
-          { error: 'Aucune clé OpenRouter et backend indisponible', details: err },
-          { status: 502 }
-        );
-      }
-      const data = await fallback.json();
-      return NextResponse.json(data);
+      // Clé absente → Pas de fallback car NestJS a été remplacé par Next.js
+      return NextResponse.json(
+        { error: 'Clé OpenRouter non configurée. Veuillez configurer OPENROUTER_API_KEY dans les variables d\'environnement.' },
+        { status: 500 }
+      );
     }
 
     // Construire les messages pour le modèle chat
@@ -282,22 +272,9 @@ export async function POST(request: NextRequest) {
 
     if (!orRes.ok) {
       const errorText = await orRes.text();
-      // Fallback vers backend si l’appel OpenRouter échoue
-      try {
-        const fallback = await fetch(`${BACKEND_URL}/assistant/ask`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        if (fallback.ok) {
-          const data = await fallback.json();
-          return NextResponse.json(data);
-        }
-      } catch {}
-
       return NextResponse.json(
         {
-          error: 'Échec de l’appel OpenRouter',
+          error: 'Échec de l\'appel OpenRouter',
           details: errorText,
           status: orRes.status,
         },
@@ -332,28 +309,60 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Optionnel : endpoint pour les suggestions
+// Suggestions statiques intégrées directement (NestJS remplacé par Next.js)
 export async function GET() {
   try {
-    const response = await fetch(`${BACKEND_URL}/assistant/suggestions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const suggestions = [
+      {
+        category: 'Marketing',
+        question: 'Quels outils IA sont les meilleurs pour le service client ?',
+        description: 'Découvrez les solutions d\'IA conversationnelle et de support automatisé'
       },
-    });
-
-    if (!response.ok) {
-      throw new Error('Impossible de récupérer les suggestions');
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
+      {
+        category: 'Analyse',
+        question: 'Montrez-moi des solutions économiques pour PME',
+        description: 'Trouvez des outils d\'analyse de données adaptés aux petites entreprises'
+      },
+      {
+        category: 'Productivité',
+        question: 'Quels outils s\'intègrent bien avec Microsoft 365 ?',
+        description: 'Optimisez votre workflow avec des outils compatibles Office'
+      },
+      {
+        category: 'Design',
+        question: 'Quelles sont les meilleures plateformes d\'IA créative ?',
+        description: 'Explorez les outils de génération d\'images et de design automatisé'
+      },
+      {
+        category: 'Développement',
+        question: 'Quels sont les meilleurs outils de code IA pour développeurs ?',
+        description: 'Accélérez votre développement avec l\'IA assistée'
+      },
+      {
+        category: 'Finance',
+        question: 'Existe-t-il des outils IA pour la gestion financière ?',
+        description: 'Automatisez votre comptabilité et analyse financière'
+      }
+    ];
+    
+    return NextResponse.json({ suggestions });
     
   } catch (error) {
     console.error('Erreur suggestions:', error);
-    return NextResponse.json(
-      { error: 'Erreur lors de la récupération des suggestions' },
-      { status: 500 }
-    );
+    // Retourner des suggestions par défaut en cas d'erreur
+    return NextResponse.json({
+      suggestions: [
+        {
+          category: 'Général',
+          question: 'Quels outils IA recommandez-vous ?',
+          description: 'Découvrez les outils les plus populaires'
+        },
+        {
+          category: 'Productivité',
+          question: 'Comment améliorer ma productivité avec l\'IA ?',
+          description: 'Découvrez des outils pour optimiser votre travail'
+        }
+      ]
+    });
   }
 }

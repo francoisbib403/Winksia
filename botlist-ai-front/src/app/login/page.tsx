@@ -108,7 +108,7 @@ function LoginContent() {
       {/* Section gauche - Branding + Avantages */}
       <div className="hidden lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:px-8 xl:px-12 bg-gradient-to-br from-blue-600 to-purple-700 text-white">
         <div className="max-w-md mx-auto">
-          <a className="inline-flex items-center text-xl font-bold text-white mb-8" href="/">
+          <Link className="inline-flex items-center text-xl font-bold text-white mb-8" href="/">
             <div className="w-10 h-10 bg-white/20 rounded-lg mr-3 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-sparkles w-6 h-6" aria-hidden="true">
                 <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path>
@@ -119,7 +119,7 @@ function LoginContent() {
               </svg>
             </div>
             WINKSIA
-          </a>
+          </Link>
           <h1 className="text-2xl xl:text-3xl font-bold mb-4 leading-tight">Rejoignez notre communauté d'utilisateurs</h1>
           <p className="text-blue-100 mb-8 leading-relaxed">Créez votre compte gratuit et accédez à notre catalogue de plus de 1000 outils d'intelligence artificielle.</p>
           <div className="space-y-4">

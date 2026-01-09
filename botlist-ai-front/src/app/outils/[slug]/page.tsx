@@ -120,9 +120,9 @@ export default async function ToolSlugPage({ params }: PageProps) {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Outil non trouvé</h1>
             <p className="text-gray-600 mb-4">Le slug de l'outil est invalide.</p>
-            <a href="/outils" className="text-blue-600 hover:text-blue-700">
+            <Link href="/outils" className="text-blue-600 hover:text-blue-700">
               Retour aux outils
-            </a>
+            </Link>
           </div>
         </div>
       )
@@ -136,9 +136,9 @@ export default async function ToolSlugPage({ params }: PageProps) {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Outil non trouvé</h1>
             <p className="text-gray-600 mb-4">L'outil "{slug}" n'existe pas.</p>
-            <a href="/outils" className="text-blue-600 hover:text-blue-700">
+            <Link href="/outils" className="text-blue-600 hover:text-blue-700">
               Retour aux outils
-            </a>
+            </Link>
           </div>
         </div>
       )
@@ -148,15 +148,15 @@ export default async function ToolSlugPage({ params }: PageProps) {
 
     return <ToolDetailClient tool={tool} />
   } catch (error) {
-    console.error('Erreur lors du chargement de l\'outil:', error)
+    console.error("Erreur lors du chargement de l'outil:", error)
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Erreur</h1>
           <p className="text-gray-600 mb-4">Une erreur est survenue lors du chargement de l'outil.</p>
-          <a href="/outils" className="text-blue-600 hover:text-blue-700">
+          <Link href="/outils" className="text-blue-600 hover:text-blue-700">
             Retour aux outils
-          </a>
+          </Link>
         </div>
       </div>
     )

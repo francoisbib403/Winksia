@@ -8,7 +8,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { AlertTriangle, ArrowLeft, ArrowUp, Copy, MessageSquare, ThumbsDown, ThumbsUp } from "lucide-react"
+import * as Popover from '@radix-ui/react-popover';
+import { AlertTriangle, ArrowLeft, ArrowUp, Copy, MessageSquare, ThumbsDown, ThumbsUp, LogOut, User } from "lucide-react"
 
 type Role = "user" | "assistant"
 
@@ -217,6 +218,65 @@ export default function AssistantPage() {
   const [error, setError] = useState<string | null>(null)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const scrollerRef = useRef<HTMLDivElement>(null)
+  
+  // États d'authentification
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+
+  // Vérifier l'authentification au chargement
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    const userData = localStorage.getItem('user_data');
+    
+    if (token && userData) {
+      try {
+        const user = JSON.parse(userData);
+        setCurrentUser(user);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Erreur parsing user data:', error);
+      }
+    }
+  }, []);
+
+  // Fonction de logout
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // Unifie la déconnexion: efface cookies + storage et force un reload
+    // Ajoute des logs pour valider l'effacement
+    import('@/lib/logout').then(({ logoutClient }) => logoutClient('/'))
+  }
+
+  // Fonction pour obtenir les initiales
+  const getUserInitials = () => {
+    if (!currentUser) return '?';
+    const firstname = currentUser.firstname || '';
+    const lastname = currentUser.lastname || '';
+    if (firstname && lastname) {
+      return `${firstname[0]}${lastname[0]}`.toUpperCase();
+    }
+    if (firstname) {
+      return firstname.slice(0, 2).toUpperCase();
+    }
+    if (currentUser.email) {
+      return currentUser.email[0].toUpperCase();
+    }
+    return '?';
+  };
+
+  // Fonction pour obtenir le nom d'affichage
+  const getUserDisplayName = () => {
+    if (!currentUser) return '';
+    if (currentUser.firstname && currentUser.lastname) {
+      return `${currentUser.firstname} ${currentUser.lastname}`;
+    } else if (currentUser.firstname) {
+      return currentUser.firstname;
+    } else if (currentUser.email) {
+      return currentUser.email.split('@')[0];
+    }
+    return 'Utilisateur';
+  };
 
   useEffect(() => {
     const loadSuggestions = async () => {
@@ -328,7 +388,7 @@ export default function AssistantPage() {
 
       // Gestion des threads
       const nowIso = new Date().toISOString()
-      let nextThreads: ChatThread[] = []
+      const nextThreads: ChatThread[] = []
       if (forceNew || !activeThreadId) {
         const title = userMsg.content.slice(0, 60)
         const newThread: ChatThread = {
@@ -375,25 +435,57 @@ export default function AssistantPage() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
-      {/* Header sans barre de recherche */}
+      {/* Header avec navigation et profile */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="w-full px-16 py-4">
-          <div className="grid grid-cols-2 items-center gap-6">
+          <div className="flex items-center justify-between">
             {/* Logo */}
-            <div className="flex items-center gap-4 justify-self-start">
-              <Link href="/" className="flex items-center">
-                <span className="text-xl font-bold text-gray-900">WINKSIA</span>
-              </Link>
-            </div>
+            <Link href="/" className="flex items-center">
+              <span className="text-xl font-bold text-gray-900">WINKSIA</span>
+            </Link>
             {/* Actions à droite */}
-            <div className="flex items-center gap-6 justify-self-end ml-auto">
+            <div className="flex items-center gap-6">
               <Link href="/outils" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
                 Outils
               </Link>
               <Link href="/assistant" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
                 Chat
               </Link>
-              <span className="text-gray-400 font-medium">Classement</span>
+              <Link href="/classement" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
+                Classement
+              </Link>
+              {isAuthenticated && currentUser ? (
+                <Popover.Root open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+                  <Popover.Trigger asChild>
+                    <button className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-colors">
+                      <span className="text-sm">{getUserInitials()}</span>
+                    </button>
+                  </Popover.Trigger>
+                  <Popover.Portal>
+                    <Popover.Content className="w-48 bg-white rounded-lg shadow-lg border p-2 z-50" sideOffset={5} align="end">
+                      <div className="px-3 py-2 border-b mb-2">
+                        <p className="font-medium text-gray-900 truncate">{getUserDisplayName()}</p>
+                        <p className="text-sm text-gray-500 truncate">{currentUser?.email}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors" onClick={() => setIsProfileOpen(false)}>
+                          <User size={16} />
+                          <span>Mon profil</span>
+                        </Link>
+                        <button className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors" onClick={handleLogout}>
+                          <LogOut size={16} />
+                          <span>Déconnexion</span>
+                        </button>
+                      </div>
+                      <Popover.Arrow className="fill-white" />
+                    </Popover.Content>
+                  </Popover.Portal>
+                </Popover.Root>
+              ) : (
+                <Link href="/login" className="px-4 py-2 text-gray-700 hover:text-blue-900 font-medium transition-colors">
+                  Se connecter
+                </Link>
+              )}
             </div>
           </div>
         </div>
