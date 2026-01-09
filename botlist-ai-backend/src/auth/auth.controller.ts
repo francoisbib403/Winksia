@@ -24,6 +24,7 @@ export class AuthController {
   @Public()
   @Post('register')
   async register(@Body() dto: RegisterDto) {
+    console.log('📝 [Auth] Registration attempt for email:', dto.email);
     return this.authService.register(dto);
   }
 

@@ -45,6 +45,49 @@ import { getFaviconUrl } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 
 // ============================================
+// Avatar Component with Initials
+// ============================================
+
+function UserAvatar({ user, onLogout }: { user: any; onLogout: () => void }) {
+  const getInitials = () => {
+    if (!user) return '?';
+    const firstname = user.firstname || '';
+    const lastname = user.lastname || '';
+    if (firstname && lastname) {
+      return `${firstname[0]}${lastname[0]}`.toUpperCase();
+    }
+    if (firstname) {
+      return firstname.slice(0, 2).toUpperCase();
+    }
+    if (user.email) {
+      return user.email[0].toUpperCase();
+    }
+    return '?';
+  };
+
+  const hasExternalAvatar = user?.avatar_url || user?.picture || user?.photo_url;
+
+  return (
+    <button
+      className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border bg-blue-900 text-white font-semibold hover:bg-blue-800 transition-colors"
+      type="button"
+      onClick={onLogout}
+    >
+      {hasExternalAvatar ? (
+        /* biome-ignore lint/performance/noImgElement: Using img for external avatar */
+        <img
+          alt={user?.firstname || 'User'}
+          className="h-full w-full rounded-full object-cover"
+          src={hasExternalAvatar}
+        />
+      ) : (
+        <span className="text-sm">{getInitials()}</span>
+      )}
+    </button>
+  );
+}
+
+// ============================================
 // Types & Interfaces
 // ============================================
 
@@ -162,6 +205,42 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
   // ============================================
   // State Management
   // ============================================
+
+  // Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // ============================================
+  // Authentication Effects
+  // ============================================
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    const userData = localStorage.getItem('user_data');
+
+    if (token && userData) {
+      try {
+        const user = JSON.parse(userData);
+        setCurrentUser(user);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Erreur parsing user data:', error);
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user_data');
+      }
+    }
+    // Note: If not authenticated, the middleware will redirect to login
+    // We don't do client-side redirect here to avoid hydration issues
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user_data');
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    window.location.reload(); // Reload to update state
+  };
+
   const [searchQuery, setSearchQuery] = useState("")
   const [filterSearch, setFilterSearch] = useState("")
   const [selectedTool, setSelectedTool] = useState<ToolDisplay | null>(null)
@@ -700,6 +779,13 @@ export default function ClientToolsComponent({ initialTools, categories }: Clien
                 Chat
               </Link>
               <span className="text-gray-400 font-medium">Classement</span>
+              {isAuthenticated && currentUser ? (
+                <UserAvatar user={currentUser} onLogout={handleLogout} />
+              ) : (
+                <Link href="/login" className="text-gray-700 hover:text-blue-900 font-medium transition-colors">
+                  Se connecter
+                </Link>
+              )}
             </div>
           </div>
         </div>

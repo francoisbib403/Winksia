@@ -1,4 +1,4 @@
-// lib/api-client.ts
+// lib/api-client.ts - API Client pour les routes Next.js locales
 import axios from 'axios';
 
 // Types pour les réponses API
@@ -11,14 +11,19 @@ export interface LoginResponse {
     lastname: string;
     email: string;
     role: string;
-    status: string;
-    activate: boolean;
-    auth_type: string;
-    slug?: string;
-    created_at: string;
-    updated_at: string;
-    emailVerified?: boolean;
-    emailVerifiedAt?: string;
+    isActive: boolean;
+    avatarUrl?: string;
+    bio?: string;
+    website?: string;
+    company?: string;
+    jobTitle?: string;
+    isPublicProfile: boolean;
+    preferredLanguage: string;
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+    theme: string;
+    createdAt: string;
+    updatedAt: string;
   };
 }
 
@@ -56,21 +61,16 @@ export interface ApiError {
 
 class ApiClient {
   private instance: any;
-  private baseURL: string;
 
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    console.log('🔧 ApiClient initialized with baseURL:', this.baseURL);
-    
+    // Utiliser une URL vide car les routes sont locales (/api/...)
     this.instance = axios.create({
-      baseURL: this.baseURL,
       timeout: 15000,
-      withCredentials: true,
+      withCredentials: true, // Important pour les cookies
       headers: {
         'Content-Type': 'application/json',
       },
     });
-
 
     this.setupInterceptors();
   }
@@ -79,10 +79,8 @@ class ApiClient {
     // Intercepteur pour les requêtes
     this.instance.interceptors.request.use(
       (config: any) => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+        // Le token d'accès est automatiquement géré par les cookies HTTP-only
+        // Pas besoin de le lire depuis localStorage
         
         console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.url}`);
         return config;
@@ -109,19 +107,19 @@ class ApiClient {
           statusText: error.response?.statusText,
           data: error.response?.data,
           url: error.config?.url,
-          baseURL: error.config?.baseURL,
         });
         
         // Handle network errors
         if (error.code === 'ERR_NETWORK') {
-          console.error('🌐 Network Error - Backend may be unreachable at:', error.config?.baseURL);
+          console.error('🌐 Network Error - API may be unreachable');
         }
         
+        // Handle 401 with token refresh
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
           
           try {
-            const refreshResponse = await this.instance.post('/auth/refresh');
+            const refreshResponse = await this.instance.post('/api/auth/refresh');
             const newToken = refreshResponse.data.accessToken;
             
             if (newToken) {
@@ -142,19 +140,12 @@ class ApiClient {
           }
         }
         
-        console.error('❌ API Error:', {
-          status: error.response?.status,
-          data: error.response?.data,
-          url: (error.config?.baseURL || '') + (error.config?.url || ''),
-          message: error.message,
-        });
-        
         return Promise.reject(error);
       }
     );
   }
 
-  // Méthodes HTTP génériques
+  // Méthodes HTTP génériques - utilisent des URLs relatives locales
   async get<T = any>(url: string, config?: any): Promise<T> {
     const response = await this.instance.get(url, config);
     return response.data;
@@ -182,11 +173,12 @@ class ApiClient {
 
   // Méthodes d'authentification
   async login(email: string, password: string): Promise<LoginResponse> {
-    const response = await this.post<LoginResponse>('/auth/login', {
+    const response = await this.post<LoginResponse>('/api/auth/login', {
       email,
       password,
     });
     
+    // Stocker le token d'accès pour les requêtes authentifiées
     if (typeof window !== 'undefined' && response.accessToken) {
       localStorage.setItem('access_token', response.accessToken);
       localStorage.setItem('user_data', JSON.stringify(response.user));
@@ -196,7 +188,7 @@ class ApiClient {
   }
 
   async logout(): Promise<{ message: string }> {
-    const result = await this.post<{ message: string }>('/auth/logout');
+    const result = await this.post<{ message: string }>('/api/auth/logout');
     
     if (typeof window !== 'undefined') {
       localStorage.removeItem('access_token');
@@ -212,96 +204,97 @@ class ApiClient {
     lastname?: string;
     password: string;
   }): Promise<LoginResponse> {
-    return this.post<LoginResponse>('/auth/register', userData);
+    return this.post<LoginResponse>('/api/auth/register', userData);
   }
 
   async refreshToken(): Promise<{ accessToken: string; user: any }> {
-    return this.post('/auth/refresh');
+    return this.post('/api/auth/refresh');
   }
 
   // Méthodes pour les utilisateurs
   async getUsers() {
-    return this.get('/user');
+    return this.get('/api/user');
   }
 
   async createUser(userData: any) {
-    return this.post('/user', userData);
+    return this.post('/api/user', userData);
   }
 
   async updateUser(userId: string, userData: any) {
-    return this.patch(`/user/${userId}`, userData);
+    return this.patch(`/api/user/${userId}`, userData);
   }
 
   async deleteUser(userId: string) {
-    return this.delete(`/user/${userId}`);
+    return this.delete(`/api/user/${userId}`);
   }
 
   // Méthodes pour les outils
   async getTools() {
-    return this.get('/tools');
+    return this.get('/api/tools');
   }
 
   async createTool(toolData: any) {
-    return this.post('/tools', toolData);
+    return this.post('/api/tools', toolData);
   }
 
   async updateTool(toolId: string, toolData: any) {
-    return this.patch(`/tools/${toolId}`, toolData);
+    return this.patch(`/api/tools/${toolId}`, toolData);
   }
 
   // Méthodes pour les catégories
   async getCategories() {
-    return this.get('/categories');
+    return this.get('/api/categories');
   }
 
   async createCategory(categoryData: any) {
-    return this.post('/categories', categoryData);
+    return this.post('/api/categories', categoryData);
   }
 
   async updateCategory(categoryId: string, categoryData: any) {
-    return this.patch(`/categories/${categoryId}`, categoryData);
+    return this.patch(`/api/categories/${categoryId}`, categoryData);
   }
 
-  // 🆕 MÉTHODES POUR LES REVIEWS
- // ✅ DANS api-client.ts - VÉRIFIEZ QUE CETTE MÉTHODE EXISTE ET FILTRE BIEN
-async getReviews(toolId?: string): Promise<ReviewResponse[]> {
-  const url = toolId ? `/reviews?tool_id=${toolId}` : '/reviews';
-  return this.get(url);
-}
+  // Méthodes pour les reviews
+  async getReviews(toolId?: string): Promise<ReviewResponse[]> {
+    const url = toolId ? `/api/reviews?tool_id=${toolId}` : '/api/reviews';
+    return this.get(url);
+  }
 
   async createReview(reviewData: CreateReviewRequest): Promise<ReviewResponse> {
-    return this.post('/reviews', reviewData);
+    return this.post('/api/reviews', reviewData);
   }
 
   async updateReview(reviewId: string, reviewData: Partial<CreateReviewRequest>): Promise<ReviewResponse> {
-    return this.patch(`/reviews/${reviewId}`, reviewData);
+    return this.patch(`/api/reviews/${reviewId}`, reviewData);
   }
 
   async deleteReview(reviewId: string): Promise<{ message: string }> {
-    return this.delete(`/reviews/${reviewId}`);
+    return this.delete(`/api/reviews/${reviewId}`);
   }
 
-  // Méthode pour récupérer les reviews d'un outil spécifique
   async getToolReviews(toolId: string): Promise<ReviewResponse[]> {
-    return this.get(`/tools/${toolId}/reviews`);
+    return this.get(`/api/tools/${toolId}/reviews`);
   }
 
-  // Méthode pour approuver/rejeter une review (admin)
   async updateReviewStatus(reviewId: string, status: 'APPROVED' | 'REJECTED'): Promise<ReviewResponse> {
-    return this.patch(`/reviews/${reviewId}/status`, { status });
+    return this.patch(`/api/reviews/${reviewId}/status`, { status });
   }
 
-  // Méthodes pour les commentaires de reviews
   async createReviewComment(commentData: {
     review_id: string;
     user_id: string;
     comment: string;
   }): Promise<any> {
-    return this.post('/reviews/comments', commentData);
+    return this.post('/api/reviews/comments', commentData);
   }
 
   async getReviewComments(reviewId: string): Promise<any[]> {
-    return this.get(`/reviews/${reviewId}/comments`);
+    return this.get(`/api/reviews/${reviewId}/comments`);
+  }
+
+  // Health check
+  async healthCheck() {
+    return this.get('/api/health');
   }
 }
 

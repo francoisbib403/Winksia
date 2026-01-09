@@ -122,7 +122,7 @@ export default function Header() {
   // AFFICHAGE DU NOM UTILISATEUR AMÉLIORÉ
   const getUserDisplayName = () => {
     if (!currentUser) return '';
-    
+
     // Priorité: prénom/nom, sinon email avant @
     if (currentUser.firstname && currentUser.lastname) {
       return `${currentUser.firstname} ${currentUser.lastname}`;
@@ -133,6 +133,26 @@ export default function Header() {
     }
     return 'Utilisateur';
   };
+
+  // FONCTION POUR OBTENIR LES INITIALES
+  const getUserInitials = () => {
+    if (!currentUser) return '?';
+    const firstname = currentUser.firstname || '';
+    const lastname = currentUser.lastname || '';
+    if (firstname && lastname) {
+      return `${firstname[0]}${lastname[0]}`.toUpperCase();
+    }
+    if (firstname) {
+      return firstname.slice(0, 2).toUpperCase();
+    }
+    if (currentUser.email) {
+      return currentUser.email[0].toUpperCase();
+    }
+    return '?';
+  };
+
+  // VÉRIFIER SI L'UTILISATEUR A UN VRAI AVATAR (URL EXTERNE COMME GOOGLE)
+  const hasExternalAvatar = currentUser?.avatar_url || currentUser?.picture || currentUser?.photo_url;
 
   return (
     <>
@@ -163,38 +183,28 @@ export default function Header() {
 
           {/* Buttons */}
           <div className="flex items-center gap-3 justify-self-end">
-            {/* SECTION UTILISATEUR CORRIGÉE */}
+            {/* SECTION UTILISATEUR AVEC AVATAR PERSONNALISÉ */}
             {isAuthenticated && currentUser ? (
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <span className="text-sm text-gray-600">
-                    Bonjour, {getUserDisplayName()}
-                  </span>
-                  {currentUser.role && (
-                    <div className="text-xs text-gray-400">
-                      {currentUser.role}
-                    </div>
-                  )}
-                </div>
-
-                {/* Avatar utilisateur (optionnel) */}
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">
-                    {currentUser.firstname
-                      ? currentUser.firstname[0].toUpperCase()
-                      : currentUser.email[0].toUpperCase()
-                    }
-                  </span>
-                </div>
-
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all hover:scale-105"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Déconnexion
-                </button>
-              </div>
+              <button
+                className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border bg-blue-900 text-white font-semibold hover:bg-blue-800 transition-colors"
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded="false"
+                aria-controls="radix-_r_0_"
+                data-state="closed"
+                onClick={handleLogout}
+              >
+                {hasExternalAvatar ? (
+                  /* biome-ignore lint/performance/noImgElement: Using img for external avatar */
+                  <img
+                    alt={getUserDisplayName()}
+                    className="h-full w-full rounded-full object-cover"
+                    src={hasExternalAvatar}
+                  />
+                ) : (
+                  <span className="text-sm">{getUserInitials()}</span>
+                )}
+              </button>
             ) : (
               <div className="flex items-center gap-3">
                 <Link

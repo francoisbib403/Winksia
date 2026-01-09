@@ -48,7 +48,15 @@ async function bootstrap() {
     });
   }
   
-  console.log(`🚀 API NestJS démarrée sur http://localhost:${process.env.APP_PORT ?? 5000}`);
-  await app.listen(process.env.APP_PORT ?? 5000);
+  const port = Number(process.env.APP_PORT ?? 5000);
+  const host = '0.0.0.0';
+  await app.listen(port, host);
+
+  const codespace = process.env.CODESPACE_NAME;
+  const fwdDomain = process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN;
+  const publicUrl = codespace && fwdDomain ? `https://${codespace}-${port}.${fwdDomain}` : null;
+  console.log(
+    `🚀 API NestJS listening on http://${host}:${port}` + (publicUrl ? ` | Public: ${publicUrl}` : ''),
+  );
 }
 bootstrap();

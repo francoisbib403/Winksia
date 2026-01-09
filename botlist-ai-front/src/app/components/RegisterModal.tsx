@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Eye, EyeOff, Loader2, Mail, User, Building, CheckCircle } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
 
 interface RegisterModalProps {
   isOpen: boolean
@@ -142,15 +143,37 @@ export default function RegisterModal({
     setError(null)
 
     try {
-      const username = formData.username || generateUsername(formData.firstname, formData.lastname)
+      // Make actual API call to register with correct fields
+      const response = await apiClient.register({
+        email: formData.email,
+        password: formData.pwd,
+        firstname: formData.firstname,
+        lastname: formData.lastname,
+      })
 
-      setTimeout(() => {
-        onRegistrationSuccess("demo-token", formData.email)
-        setIsSubmitting(false)
-      }, 2000)
+      console.log('✅ Registration successful:', response)
+
+      // Store tokens
+      if (response.accessToken) {
+        localStorage.setItem('access_token', response.accessToken)
+      }
+      if (response.refreshToken) {
+        localStorage.setItem('refresh_token', response.refreshToken)
+      }
+
+      // Call success callback with the access token
+      onRegistrationSuccess(response.accessToken || "demo-token", formData.email)
+      setIsSubmitting(false)
     } catch (error: any) {
-      console.error("Erreur inscription:", error)
-      setError("Erreur lors de l'inscription")
+      console.error("❌ Erreur inscription:", error)
+      // Provide more detailed error message
+      const errorMessage = error?.response?.data?.message || error?.message || "Erreur lors de l'inscription"
+      console.error("📊 Error details:", {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: errorMessage
+      })
+      setError(errorMessage)
       setIsSubmitting(false)
     }
   }

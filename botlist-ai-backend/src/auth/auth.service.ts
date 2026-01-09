@@ -46,10 +46,14 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto): Promise<RegisterResponse> {
+    console.log('📝 [AuthService] Registration attempt for email:', dto.email);
+    
     if (await this.userService.checkEmail(dto.email)) {
+      console.warn('⚠️ [AuthService] Email already exists:', dto.email);
       throw new ConflictException('Email already used');
     }
 
+    console.log('✅ [AuthService] Creating new user for:', dto.email);
     const user = new User();
     user.email = dto.email;
     user.firstname = dto.firstname || '';
@@ -59,9 +63,12 @@ export class AuthService {
     user.role = 'user';
 
     const savedUser = await this.userService.save(user);
+    console.log('✅ [AuthService] User created with ID:', savedUser.id);
 
     // Return directly with tokens (no activation email needed)
-    return await this.generateTokens(user);
+    const tokens = await this.generateTokens(user);
+    console.log('✅ [AuthService] Tokens generated for user:', savedUser.id);
+    return tokens;
   }
 
   async login(dto: LoginDto): Promise<LoginResponse> {

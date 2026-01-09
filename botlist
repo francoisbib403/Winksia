@@ -1,4 +1,4 @@
-import type { ToolSummary } from '@/types/tool';
+import { ToolSummary } from '@/types/tool';
 import { getLocalToolsAsSummary, checkLocalMode } from './localTools';
 import { getTools as getToolsFromSupabase } from './services/tools.service';
 
@@ -22,19 +22,19 @@ export const getAllTools = async (): Promise<ToolSummary[]> => {
 export const getToolById = async (id: string): Promise<ToolSummary | null> => {
   if (typeof window !== 'undefined' && checkLocalMode()) {
     const localTools = getLocalToolsAsSummary();
-    return localTools.find((t: ToolSummary) => t.id === id) || null;
+    return localTools.find(t => t.id === id) || null;
   }
   
-  const { getToolById: getFromSupabase } = await import('./services/tools.service');
+  const { getToolById: getFromSupabase } = require('./services/tools.service');
   return getFromSupabase(id);
 };
 
 export const getToolBySlug = async (slug: string): Promise<ToolSummary | null> => {
   if (typeof window !== 'undefined' && checkLocalMode()) {
     const localTools = getLocalToolsAsSummary();
-    return localTools.find((t: ToolSummary) => t.slug === slug || t.id === slug) || null;
+    return localTools.find(t => t.slug === slug || t.id === slug) || null;
   }
   
-  const { getToolBySlug: getFromSupabase } = await import('./services/tools.service');
+  const { getToolBySlug: getFromSupabase } = require('./services/tools.service');
   return getFromSupabase(slug);
 };

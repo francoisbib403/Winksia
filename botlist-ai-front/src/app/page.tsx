@@ -6,12 +6,16 @@ import AboutSection from "@/app/components/about-section"
 import TestimonialsSection from "@/app/components/testimonials-section"
 import NewsletterSection from "@/app/components/newsletter-section"
 import ContactSection from "@/app/components/contact-section"
+import OAuthCallbackHandler from "@/components/OAuthCallbackHandler"
 
 import Footer from "@/app/components/footer"
 
 export default function HomePage() {
   return (
     <div className="min-h-screen">
+      {/* Handle OAuth callback if present */}
+      <OAuthCallbackHandler />
+
       {/* Header */}
       <Header />
 

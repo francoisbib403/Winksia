@@ -44,7 +44,13 @@ export class User {
   lastname: string;
 
   @Column({ name: 'avatar_url', type: 'varchar', length: 500, nullable: true })
-  avatarUrl: string;
+  avatarUrl: string | null;
+
+  @Column({ name: 'provider', type: 'varchar', length: 50, nullable: true })
+  provider: string;
+
+  @Column({ name: 'provider_id', type: 'varchar', length: 255, nullable: true })
+  providerId: string;
 
   @Column({ name: 'bio', type: 'text', nullable: true })
   bio: string;
@@ -164,6 +170,8 @@ export class User {
       first_name: this.firstname || '',
       last_name: this.lastname || '',
       avatar_url: this.avatarUrl,
+      provider: this.provider,
+      provider_id: this.providerId,
       bio: this.bio,
       website: this.website,
       company: this.company,

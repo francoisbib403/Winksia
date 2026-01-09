@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { BarChart3, Users, Bot, Star, TrendingUp, DollarSign, MessageSquare, Eye, Settings, Search, Bell, Filter, MoreVertical, ArrowUp, ArrowDown, Calendar, Download, Plus, Zap, Globe, Shield, Activity, TypeIcon as type, type LucideIcon, X, Link, Code, Layers, CheckCircle, AlertCircle, UserPlus, UserIcon, Info, LogIn, EyeOff, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import UserAccountAvatar from '../components/UserAccountAvatar';
 
 // Imports des fonctions API
 import { getAllTools, createTool, updateTool } from '@/lib/useTools';

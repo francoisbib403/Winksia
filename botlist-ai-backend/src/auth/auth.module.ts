@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserModule } from 'src/user/user.module';
 import { AuthController } from './auth.controller';
+import { RegisterController } from './register.controller';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -29,7 +30,7 @@ import { SessionModule } from 'src/session/session.module';
     }),
   ],
   providers: [AuthService, JwtStrategy],
-  controllers: [AuthController],
+  controllers: [AuthController, RegisterController],
   exports: [PassportModule, JwtModule],
 })
 export class AuthModule {}

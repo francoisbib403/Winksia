@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { apiClient } from "@/lib/api-client"
+import { signInWithOAuth } from "@/lib/supabase-auth"
 import { ToastProvider, useToast } from "@/components/Toast"
 
 interface RegisterFormData {
@@ -51,9 +52,17 @@ function RegisterContent() {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleSocialAuth = (provider: 'google' | 'microsoft') => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-    window.location.href = `${baseUrl}/auth/${provider}`
+  const handleSocialAuth = async (provider: 'google' | 'azure') => {
+    setIsLoading(true)
+    try {
+      console.log(`🔐 Initiating ${provider === 'azure' ? 'Microsoft' : provider} OAuth with Supabase...`)
+      await signInWithOAuth(provider)
+      // The redirect happens automatically via Supabase OAuth flow
+    } catch (error: any) {
+      console.error(`❌ ${provider === 'azure' ? 'Microsoft' : provider} OAuth error:`, error)
+      addToast(`Erreur avec ${provider === 'azure' ? 'Microsoft' : provider}: ${error.message || 'Configuration non disponible'}`, 'error')
+      setIsLoading(false)
+    }
   }
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -75,14 +84,14 @@ function RegisterContent() {
       })
       
       if (response.accessToken) {
-        // Registration successful, save tokens and redirect
-        localStorage.setItem('access_token', response.accessToken)
-        localStorage.setItem('refresh_token', response.refreshToken)
-        localStorage.setItem('user_data', JSON.stringify(response.user))
-        localStorage.setItem('user', JSON.stringify(response.user))
+        // Registration successful, redirect to login page for user to sign in
+        addToast("Compte créé avec succès ! Veuillez vous connecter.", 'success');
         
-        // Redirect to outils page
-        window.location.href = '/outils'
+        // Small delay to show the success message
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500);
+        return;
       }
     } catch (error: any) {
       console.error('Erreur inscription:', error);
@@ -274,7 +283,7 @@ function RegisterContent() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleSocialAuth('microsoft')}
+                    onClick={() => handleSocialAuth('azure')}
                     disabled={isLoading}
                     className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
@@ -294,7 +303,7 @@ function RegisterContent() {
                     id="acceptTerms"
                     checked={form.acceptTerms}
                     onChange={(e) => handleInputChange("acceptTerms", e.target.checked)}
-                    className="w-5 h-5 accent-[#fdc700] border-gray-300 rounded focus:ring-[#fdc700] mt-0.5" style={{ color: 'white' }}
+                    className="w-5 h-5 accent-[#fdc700] border-gray-300 rounded focus:ring-[#fdc700]" style={{ color: 'white' }}
                     disabled={isLoading}
                   />
                   <label htmlFor="acceptTerms" className="text-sm text-gray-700">

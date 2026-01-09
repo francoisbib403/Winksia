@@ -1,17 +1,19 @@
 "use client"
 
-import { useState } from "react"
-import { 
-  Eye, 
-  EyeOff, 
-  Loader2, 
-  LogIn, 
-  Mail, 
-  Lock, 
+import { Suspense, useState } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  LogIn,
+  Mail,
+  Lock,
   Sparkles
 } from "lucide-react"
 import Link from "next/link"
 import { apiClient } from "@/lib/api-client"
+import { signInWithOAuth } from "@/lib/supabase-auth"
 import { ToastProvider, useToast } from "@/components/Toast"
 
 interface LoginFormData {
@@ -21,6 +23,10 @@ interface LoginFormData {
 }
 
 function LoginContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectPath = searchParams.get('redirect') || '/outils'
+  
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { addToast } = useToast()
@@ -44,44 +50,57 @@ function LoginContent() {
 
     try {
       const response = await apiClient.login(form.email, form.password)
-      
+
       if (response.accessToken) {
         localStorage.setItem('access_token', response.accessToken)
         localStorage.setItem('user_data', JSON.stringify(response.user))
         localStorage.setItem("user", JSON.stringify(response.user))
         
-        window.location.href = '/outils'
+        // Set cookies for middleware
+        document.cookie = `access_token=${response.accessToken}; path=/; max-age=3600; SameSite=Lax`
+        document.cookie = `user_data=${JSON.stringify(response.user)}; path=/; max-age=3600; SameSite=Lax`
+
+        // Redirect to the requested page or default to /outils
+        window.location.href = redirectPath
       } else {
         throw new Error("Token d'accès manquant")
       }
     } catch (error: any) {
-      console.error('Erreur de connexion:', error);
-      
+      console.error('Erreur de connexion:', error)
+
       // Extraire le message d'erreur
-      let errorMessage = 'Erreur de connexion';
-      
+      let errorMessage = 'Erreur de connexion'
+
       if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+        errorMessage = error.response.data.message
       } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
+        errorMessage = error.response.data.error
       } else if (error.message) {
-        errorMessage = error.message;
+        errorMessage = error.message
       } else if (typeof error === 'string') {
-        errorMessage = error;
+        errorMessage = error
       }
-      
-      addToast(errorMessage, 'error');
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user_data');
-      localStorage.removeItem('user');
+
+      addToast(errorMessage, 'error')
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('user_data')
+      localStorage.removeItem('user')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleSocialAuth = (provider: 'google' | 'microsoft') => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-    window.location.href = `${baseUrl}/auth/${provider}`
+  const handleSocialAuth = async (provider: 'google' | 'azure') => {
+    setIsLoading(true)
+    try {
+      console.log(`🔐 Initiating ${provider === 'azure' ? 'Microsoft' : provider} OAuth with Supabase...`)
+      await signInWithOAuth(provider)
+      // The redirect happens automatically via Supabase OAuth flow
+    } catch (error: any) {
+      console.error(`❌ ${provider === 'azure' ? 'Microsoft' : provider} OAuth error:`, error)
+      addToast(`Erreur avec ${provider === 'azure' ? 'Microsoft' : provider}: ${error.message || 'Configuration non disponible'}`, 'error')
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -262,7 +281,7 @@ function LoginContent() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleSocialAuth('microsoft')}
+                    onClick={() => handleSocialAuth('azure')}
                     disabled={isLoading}
                     className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
@@ -326,8 +345,17 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <ToastProvider>
-      <LoginContent />
-    </ToastProvider>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="w-12 h-12 bg-blue-200 rounded-lg mb-4"></div>
+          <div className="h-4 w-32 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    }>
+      <ToastProvider>
+        <LoginContent />
+      </ToastProvider>
+    </Suspense>
   )
 }

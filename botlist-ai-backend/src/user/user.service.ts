@@ -117,6 +117,32 @@ export class UserService {
     await this.supabaseHelper.remove('users', id);
   }
 
+  async createFromOAuth(data: {
+    email: string;
+    firstname: string;
+    lastname: string;
+    avatar_url: string | null;
+    provider: string;
+    providerId: string;
+  }): Promise<User> {
+    const user = new User();
+    user.email = data.email;
+    user.firstname = data.firstname;
+    user.lastname = data.lastname;
+    user.avatarUrl = data.avatar_url || null;
+    user.provider = data.provider;
+    user.providerId = data.providerId;
+    user.isActive = true;
+    user.role = 'user';
+    
+    // Generate a random password for OAuth users
+    user.password = this.generatePassword();
+    await user.hashPassword();
+    
+    const createdUser = await this.supabaseHelper.create('users', user.toDatabaseFormat());
+    return createdUser as User;
+  }
+
   async save(user: User): Promise<User> {
     if (user.id) {
       const updatedUser = await this.supabaseHelper.update('users', user.id, user.toDatabaseFormat());
